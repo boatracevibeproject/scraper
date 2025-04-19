@@ -227,13 +227,13 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
             '%s//div[2]/div[6]/div[1]/div/table/tbody[7]/tr[3]/td[1]/div/div/span[%d]',
         ];
 
-        $trifecta = $this->getCombinations($scraper, $trifectaTemplates, 1, 5);
-        $trio = $this->getCombinations($scraper, $trioTemplates, 1, 5);
-        $exacta = $this->getCombinations($scraper, $exactaTemplates, 1, 3);
-        $quinella = $this->getCombinations($scraper, $quinellaTemplates, 1, 3);
-        $quinella_place = $this->getCombinations($scraper, $quinellaPlaceTemplates, 1, 3);
-        $win = $this->getCombinations($scraper, $winTemplates, 1, 1);
-        $place = $this->getCombinations($scraper, $placeTemplates, 1, 1);
+        $trifecta = $this->filterCombinations($scraper, $trifectaTemplates, 1, 5);
+        $trio = $this->filterCombinations($scraper, $trioTemplates, 1, 5);
+        $exacta = $this->filterCombinations($scraper, $exactaTemplates, 1, 3);
+        $quinella = $this->filterCombinations($scraper, $quinellaTemplates, 1, 3);
+        $quinella_place = $this->filterCombinations($scraper, $quinellaPlaceTemplates, 1, 3);
+        $win = $this->filterCombinations($scraper, $winTemplates, 1, 1);
+        $place = $this->filterCombinations($scraper, $placeTemplates, 1, 1);
 
         return compact('trifecta', 'trio', 'exacta', 'quinella', 'quinella_place', 'win', 'place');
     }
@@ -303,7 +303,7 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
      * @param  int                                    $last
      * @return array
      */
-    private function getCombinations(Crawler $scraper, array $templates, int $first, int $last): array
+    private function filterCombinations(Crawler $scraper, array $templates, int $first, int $last): array
     {
         $response = [];
         foreach ($templates as $template) {
