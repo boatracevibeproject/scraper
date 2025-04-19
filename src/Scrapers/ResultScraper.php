@@ -85,7 +85,7 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
         $response['race_technique_number'] = $raceTechniqueNumber;
 
         $response += $this->scrapeBoats($scraper, $raceStadiumNumber, $raceNumber);
-        $response += $this->scrapeRefunds($scraper);
+        $response += $this->scrapePayouts($scraper);
 
         return $response;
     }
@@ -155,7 +155,7 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
      * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
      * @return array
      */
-    private function scrapeRefunds(Crawler $scraper): array
+    private function scrapePayouts(Crawler $scraper): array
     {
         $response = [];
 
