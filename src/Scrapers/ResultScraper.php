@@ -159,7 +159,7 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
     {
         $response = [];
 
-        $scrapedCombinations = $this->scrapeCombinations($scraper);
+        $scrapedCombinations = $this->filterAllCombinations($scraper);
         $scrapedPayouts = $this->scrapePayouts($scraper);
 
         foreach ($scrapedCombinations as $type => $combinations) {
@@ -184,7 +184,7 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
      * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
      * @return array
      */
-    private function scrapeCombinations(Crawler $scraper): array
+    private function filterAllCombinations(Crawler $scraper): array
     {
         $trifectaTemplates = [
             '%s/div[2]/div[6]/div[1]/div/table/tbody[1]/tr[1]/td[2]/div/div/span[%d]',
