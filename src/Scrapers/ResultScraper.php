@@ -85,37 +85,7 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
         $response['race_technique_number'] = $raceTechniqueNumber;
 
         $response += $this->scrapeBoats($scraper, $raceStadiumNumber, $raceNumber);
-
-        $refundFormat = '%s/div[2]/div[%s]/div[1]/div/table/tbody[%s]/tr[%s]/td[%s]/span';
-        $refundTypes = [
-            'trifecta',
-            'trio',
-            'exacta',
-            'quinella',
-            'quinella_place',
-            'win',
-            'place',
-        ];
-
-        foreach ($refundTypes as $key => $value) {
-            $response['refunds'][$value] = [];
-
-            for ($trLevel = 1; $trLevel <= 10; $trLevel++) {
-                $tdLevel = $trLevel === 1 ? 3 : 2;
-
-                $refundXPath = sprintf($refundFormat, $this->baseXPath, $this->baseLevel + 6, $key + 1, $trLevel, $tdLevel);
-                $refund = $this->filterXPath($scraper, $refundXPath);
-
-                if (!str_starts_with($refund ?? '', '¥')) {
-                    break;
-                }
-
-                $refund = str_replace('¥', '', $refund);
-                $refund = str_replace(',', '', $refund);
-
-                $response['refunds'][$value][] = Converter::convertToInt($refund);
-            }
-        }
+        $response += $this->scrapeRefunds($scraper);
 
         return $response;
     }
@@ -179,5 +149,190 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
         ksort($response['boats']);
 
         return $response;
+    }
+
+    /**
+     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
+     * @return array
+     */
+    private function scrapeRefunds(Crawler $scraper): array
+    {
+        $response = [];
+
+        $scrapedCombinations = $this->scrapeCombinations($scraper);
+        $scrapedPayouts = $this->scrapePayouts($scraper);
+
+        foreach ($scrapedCombinations as $type => $combinations) {
+            foreach ($combinations as $index => $combination) {
+                if (!isset($response['refunds'][$type])) {
+                    $response['refunds'][$type] = [];
+                }
+
+                if (!empty($combination) && !empty($scrapedPayouts[$type][$index])) {
+                    $response['refunds'][$type][] = [
+                        'combination' => $combination,
+                        'payout' => $scrapedPayouts[$type][$index],
+                    ];
+                }
+            }
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
+     * @return array
+     */
+    private function scrapeCombinations(Crawler $scraper): array
+    {
+        $trifectaTemplates = [
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[1]/tr[1]/td[2]/div/div/span[%d]',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[1]/tr[2]/td[1]/div/div/span[%d]',
+        ];
+
+        $trioTemplates = [
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[2]/tr[1]/td[2]/div/div/span[%d]',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[2]/tr[2]/td[1]/div/div/span[%d]',
+        ];
+
+        $exactaTemplates = [
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[3]/tr[1]/td[2]/div/div/span[%d]',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[3]/tr[2]/td[1]/div/div/span[%d]',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[3]/tr[3]/td[1]/div/div/span[%d]',
+        ];
+
+        $quinellaTemplates = [
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[4]/tr[1]/td[2]/div/div/span[%d]',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[4]/tr[2]/td[1]/div/div/span[%d]',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[4]/tr[3]/td[1]/div/div/span[%d]',
+        ];
+
+        $quinellaPlaceTemplates = [
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[1]/td[2]/div/div/span[%d]',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[2]/td[1]/div/div/span[%d]',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[3]/td[1]/div/div/span[%d]',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[4]/td[1]/div/div/span[%d]',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[5]/td[1]/div/div/span[%d]',
+        ];
+
+        $winTemplates = [
+            '%s//div[2]/div[6]/div[1]/div/table/tbody[6]/tr[1]/td[2]/div/div/span[%d]',
+            '%s//div[2]/div[6]/div[1]/div/table/tbody[6]/tr[2]/td[1]/div/div/span[%d]',
+        ];
+
+        $placeTemplates = [
+            '%s//div[2]/div[6]/div[1]/div/table/tbody[7]/tr[1]/td[2]/div/div/span[%d]',
+            '%s//div[2]/div[6]/div[1]/div/table/tbody[7]/tr[2]/td[1]/div/div/span[%d]',
+            '%s//div[2]/div[6]/div[1]/div/table/tbody[7]/tr[3]/td[1]/div/div/span[%d]',
+        ];
+
+        $trifecta = $this->getCombinations($scraper, $trifectaTemplates, 1, 5);
+        $trio = $this->getCombinations($scraper, $trioTemplates, 1, 5);
+        $exacta = $this->getCombinations($scraper, $exactaTemplates, 1, 3);
+        $quinella = $this->getCombinations($scraper, $quinellaTemplates, 1, 3);
+        $quinella_place = $this->getCombinations($scraper, $quinellaPlaceTemplates, 1, 3);
+        $win = $this->getCombinations($scraper, $winTemplates, 1, 1);
+        $place = $this->getCombinations($scraper, $placeTemplates, 1, 1);
+
+        return compact('trifecta', 'trio', 'exacta', 'quinella', 'quinella_place', 'win', 'place');
+    }
+
+    /**
+     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
+     * @return array
+     */
+    private function scrapePayouts(Crawler $scraper): array
+    {
+        $trifectaTemplates = [
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[1]/tr[1]/td[3]/span',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[1]/tr[2]/td[2]/span',
+        ];
+
+        $trioTemplates = [
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[2]/tr[1]/td[3]/span',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[2]/tr[2]/td[2]/span',
+        ];
+
+        $exactaTemplates = [
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[3]/tr[1]/td[3]/span',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[3]/tr[2]/td[2]/span',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[3]/tr[3]/td[2]/span',
+        ];
+
+        $quinellaTemplates = [
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[4]/tr[1]/td[3]/span',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[4]/tr[2]/td[2]/span',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[4]/tr[3]/td[2]/span',
+        ];
+
+        $quinellaPlaceTemplates = [
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[1]/td[3]/span',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[2]/td[2]/span',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[3]/td[2]/span',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[4]/td[2]/span',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[5]/td[2]/span',
+        ];
+
+        $winTemplates = [
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[6]/tr[1]/td[3]/span',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[6]/tr[2]/td[2]/span',
+        ];
+
+        $placeTemplates = [
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[7]/tr[1]/td[3]/span',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[7]/tr[2]/td[2]/span',
+            '%s/div[2]/div[6]/div[1]/div/table/tbody[7]/tr[3]/td[2]/span',
+        ];
+
+        $trifecta = $this->getPayouts($scraper, $trifectaTemplates);
+        $trio = $this->getPayouts($scraper, $trioTemplates);
+        $exacta = $this->getPayouts($scraper, $exactaTemplates);
+        $quinella = $this->getPayouts($scraper, $quinellaTemplates);
+        $quinella_place = $this->getPayouts($scraper, $quinellaPlaceTemplates);
+        $win = $this->getPayouts($scraper, $winTemplates);
+        $place = $this->getPayouts($scraper, $placeTemplates);
+
+        return compact('trifecta', 'trio', 'exacta', 'quinella', 'quinella_place', 'win', 'place');
+    }
+
+    /**
+     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
+     * @param  array                                  $templates
+     * @param  int                                    $first
+     * @param  int                                    $last
+     * @return array
+     */
+    private function getCombinations(Crawler $scraper, array $templates, int $first, int $last): array
+    {
+        $response = [];
+        foreach ($templates as $template) {
+            $values = [];
+            foreach (range($first, $last) as $index) {
+                $values[] = $this->filterXPath(
+                    $scraper,
+                    sprintf($template, $this->baseXPath, $index)
+                );
+            }
+
+            $response[] = implode($values);
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
+     * @param  array                                  $templates
+     * @return array
+     */
+    private function getPayouts($scraper, array $templates): array
+    {
+        return array_map(function ($template) use ($scraper) {
+            $value = $this->filterXPath($scraper, sprintf($template, $this->baseXPath));
+            $value = str_replace('¥', '', $value ?? '');
+            $value = str_replace(',', '', $value ?? '');
+            return Converter::convertToInt($value);
+        }, $templates);
     }
 }
