@@ -1499,7 +1499,7 @@ final class ScraperCoreDataProvider
                                     'racer_name' => '中北 涼',
                                 ],
                             ],
-                            'refunds' => [
+                            'payouts' => [
                                 'trifecta' => [
                                     [
                                         'combination' => '1-2-5',
@@ -1624,7 +1624,7 @@ final class ScraperCoreDataProvider
                                     'racer_name' => null,
                                 ],
                             ],
-                            'refunds' => [
+                            'payouts' => [
                                 'trifecta' => [],
                                 'trio' => [],
                                 'exacta' => [],

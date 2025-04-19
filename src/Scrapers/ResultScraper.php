@@ -164,12 +164,12 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
 
         foreach ($scrapedCombinations as $type => $combinations) {
             foreach ($combinations as $index => $combination) {
-                if (!isset($response['refunds'][$type])) {
-                    $response['refunds'][$type] = [];
+                if (!isset($response['payouts'][$type])) {
+                    $response['payouts'][$type] = [];
                 }
 
                 if (!empty($combination) && !empty($scrapedPayouts[$type][$index])) {
-                    $response['refunds'][$type][] = [
+                    $response['payouts'][$type][] = [
                         'combination' => $combination,
                         'payout' => $scrapedPayouts[$type][$index],
                     ];
