@@ -285,13 +285,13 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
             '%s/div[2]/div[6]/div[1]/div/table/tbody[7]/tr[3]/td[2]/span',
         ];
 
-        $trifecta = $this->getPayouts($scraper, $trifectaTemplates);
-        $trio = $this->getPayouts($scraper, $trioTemplates);
-        $exacta = $this->getPayouts($scraper, $exactaTemplates);
-        $quinella = $this->getPayouts($scraper, $quinellaTemplates);
-        $quinella_place = $this->getPayouts($scraper, $quinellaPlaceTemplates);
-        $win = $this->getPayouts($scraper, $winTemplates);
-        $place = $this->getPayouts($scraper, $placeTemplates);
+        $trifecta = $this->filterPayouts($scraper, $trifectaTemplates);
+        $trio = $this->filterPayouts($scraper, $trioTemplates);
+        $exacta = $this->filterPayouts($scraper, $exactaTemplates);
+        $quinella = $this->filterPayouts($scraper, $quinellaTemplates);
+        $quinella_place = $this->filterPayouts($scraper, $quinellaPlaceTemplates);
+        $win = $this->filterPayouts($scraper, $winTemplates);
+        $place = $this->filterPayouts($scraper, $placeTemplates);
 
         return compact('trifecta', 'trio', 'exacta', 'quinella', 'quinella_place', 'win', 'place');
     }
@@ -326,7 +326,7 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
      * @param  array                                  $templates
      * @return array
      */
-    private function getPayouts($scraper, array $templates): array
+    private function filterPayouts($scraper, array $templates): array
     {
         return array_map(function ($template) use ($scraper) {
             $value = $this->filterXPath($scraper, sprintf($template, $this->baseXPath));
