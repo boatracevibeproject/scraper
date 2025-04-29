@@ -17,16 +17,4 @@ interface StadiumScraperInterface extends ScraperContractInterface
      * @return array
      */
     public function scrape(CarbonInterface $raceDate): array;
-
-    /**
-     * @param  \Carbon\CarbonInterface  $raceDate
-     * @return array
-     */
-    public function scrapeNumbers(CarbonInterface $raceDate): array;
-
-    /**
-     * @param  \Carbon\CarbonInterface  $raceDate
-     * @return array
-     */
-    public function scrapeNames(CarbonInterface $raceDate): array;
 }

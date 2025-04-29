@@ -35,22 +35,4 @@ class StadiumScraper extends BaseScraper implements StadiumScraperInterface
 
         return $response;
     }
-
-    /**
-     * @param  \Carbon\CarbonInterface  $raceDate
-     * @return array
-     */
-    public function scrapeNumbers(CarbonInterface $raceDate): array
-    {
-        return array_keys($this->scrape($raceDate));
-    }
-
-    /**
-     * @param  \Carbon\CarbonInterface  $raceDate
-     * @return array
-     */
-    public function scrapeNames(CarbonInterface $raceDate): array
-    {
-        return array_values($this->scrape($raceDate));
-    }
 }

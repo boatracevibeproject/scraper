@@ -82,28 +82,6 @@ final class ScraperCoreTest extends TestCase
     }
 
     /**
-     * @param  array  $arguments
-     * @param  array  $expected
-     * @return void
-     */
-    #[DataProviderExternal(ScraperCoreDataProvider::class, 'scrapeStadiumNumbersProvider')]
-    public function testScrapeStadiumNumbers(array $arguments, array $expected): void
-    {
-        $this->assertSame($expected, $this->scraper->scrapeStadiumNumbers(...$arguments));
-    }
-
-    /**
-     * @param  array  $arguments
-     * @param  array  $expected
-     * @return void
-     */
-    #[DataProviderExternal(ScraperCoreDataProvider::class, 'scrapeStadiumNamesProvider')]
-    public function testScrapeStadiumNames(array $arguments, array $expected): void
-    {
-        $this->assertSame($expected, $this->scraper->scrapeStadiumNames(...$arguments));
-    }
-
-    /**
      * @return void
      */
     public function testExceptionOnTooFewArguments(): void

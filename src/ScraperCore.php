@@ -40,8 +40,6 @@ class ScraperCore implements ScraperCoreInterface
         'scrapePreviews' => PreviewScraper::class,
         'scrapePrograms' => ProgramScraper::class,
         'scrapeResults' => ResultScraper::class,
-        'scrapeStadiumNumbers' => StadiumScraper::class,
-        'scrapeStadiumNames' => StadiumScraper::class,
         'scrapeStadiums' => StadiumScraper::class,
     ];
 
@@ -84,14 +82,6 @@ class ScraperCore implements ScraperCoreInterface
                 $raceStadiumNumber,
                 $raceNumber
             );
-        }
-
-        if (str_starts_with($name, 'scrapeStadium')) {
-            return $scraper->{match ($name) {
-                'scrapeStadiumNumbers' => 'scrapeNumbers',
-                'scrapeStadiumNames' => 'scrapeNames',
-                default => 'scrape',
-            }}($raceDate);
         }
 
         $raceStadiumNumbers = $this->getRaceStadiumNumbers($raceDate, $raceStadiumNumber);
@@ -166,7 +156,9 @@ class ScraperCore implements ScraperCoreInterface
     private function getRaceStadiumNumbers(CarbonInterface $raceDate, string|int|null $raceStadiumNumber): array
     {
         if (is_null($raceStadiumNumber)) {
-            return $this->getScraperInstance('scrapeStadiums')->scrapeNumbers($raceDate);
+            return array_keys(
+                $this->getScraperInstance('scrapeStadiums')->scrape($raceDate)
+            );
         }
 
         $formattedRaceStadiumNumber = Converter::convertToString($raceStadiumNumber);

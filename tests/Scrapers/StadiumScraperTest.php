@@ -39,26 +39,4 @@ final class StadiumScraperTest extends TestCase
     {
         $this->assertSame($expected, $this->scraper->scrape(...$arguments));
     }
-
-    /**
-     * @param  array  $arguments
-     * @param  array  $expected
-     * @return void
-     */
-    #[DataProviderExternal(StadiumScraperDataProvider::class, 'scrapeStadiumNumbersProvider')]
-    public function testScrapeStadiumNumbers(array $arguments, array $expected): void
-    {
-        $this->assertSame($expected, $this->scraper->scrapeNumbers(...$arguments));
-    }
-
-    /**
-     * @param  array  $arguments
-     * @param  array  $expected
-     * @return void
-     */
-    #[DataProviderExternal(StadiumScraperDataProvider::class, 'scrapeStadiumNamesProvider')]
-    public function testScrapeStadiumNames(array $arguments, array $expected): void
-    {
-        $this->assertSame($expected, $this->scraper->scrapeNames(...$arguments));
-    }
 }
