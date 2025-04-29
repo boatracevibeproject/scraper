@@ -27,63 +27,43 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
     {
         $response = [];
 
-        $scraper1Format = '%s/owpc/pc/race/oddstf?hd=%s&jcd=%02d&rno=%d';
-        $scraper1Url = sprintf($scraper1Format, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
-        $scraper1 = $this->httpBrowser->request('GET', $scraper1Url);
-        sleep($this->seconds);
+        $response += $this->scrapeWin($raceDate, $raceStadiumNumber, $raceNumber);
+        $response += $this->scrapePlace($raceDate, $raceStadiumNumber, $raceNumber);
+        $response += $this->scrapeExacta($raceDate, $raceStadiumNumber, $raceNumber);
+        $response += $this->scrapeQuinella($raceDate, $raceStadiumNumber, $raceNumber);
+        $response += $this->scrapeQuinellaPlace($raceDate, $raceStadiumNumber, $raceNumber);
+        $response += $this->scrapeTrifecta($raceDate, $raceStadiumNumber, $raceNumber);
+        $response += $this->scrapeTrio($raceDate, $raceStadiumNumber, $raceNumber);
 
-        $scraper2Format = '%s/owpc/pc/race/odds2tf?hd=%s&jcd=%02d&rno=%d';
-        $scraper2Url = sprintf($scraper2Format, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
-        $scraper2 = $this->httpBrowser->request('GET', $scraper2Url);
-        sleep($this->seconds);
+        return $response;
+    }
 
-        $scraper3Format = '%s/owpc/pc/race/oddsk?hd=%s&jcd=%02d&rno=%d';
-        $scraper3Url = sprintf($scraper3Format, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
-        $scraper3 = $this->httpBrowser->request('GET', $scraper3Url);
-        sleep($this->seconds);
+    /**
+     * @param  \Carbon\CarbonInterface  $raceDate
+     * @param  int                      $raceStadiumNumber
+     * @param  int                      $raceNumber
+     * @return array
+     */
+    public function scrapeWin(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
+    {
+        $response = [];
 
-        $scraper4Format = '%s/owpc/pc/race/odds3t?hd=%s&jcd=%02d&rno=%d';
-        $scraper4Url = sprintf($scraper4Format, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
-        $scraper4 = $this->httpBrowser->request('GET', $scraper4Url);
-        sleep($this->seconds);
+        $response['race_date'] = $raceDate->format('Y-m-d');
+        $response['race_stadium_number'] = $raceStadiumNumber;
+        $response['race_number'] = $raceNumber;
 
-        $scraper5Format = '%s/owpc/pc/race/odds3f?hd=%s&jcd=%02d&rno=%d';
-        $scraper5Url = sprintf($scraper5Format, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
-        $scraper5 = $this->httpBrowser->request('GET', $scraper5Url);
+        $scraperFormat = '%s/owpc/pc/race/oddstf?hd=%s&jcd=%02d&rno=%d';
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
         sleep($this->seconds);
 
         $levelFormat = '%s/div[2]/div[3]/ul/li';
         $levelXPath = sprintf($levelFormat, $this->baseXPath);
 
         $this->baseLevel = 0;
-        if (!is_null($this->filterXPath($scraper1, $levelXPath))) {
+        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
             $this->baseLevel = 1;
         }
-
-        $response['race_date'] = $raceDate->format('Y-m-d');
-        $response['race_stadium_number'] = $raceStadiumNumber;
-        $response['race_number'] = $raceNumber;
-
-        $response += $this->scrapeWin($scraper1, $raceStadiumNumber, $raceNumber);
-        $response += $this->scrapePlace($scraper1, $raceStadiumNumber, $raceNumber);
-        $response += $this->scrapeExacta($scraper2, $raceStadiumNumber, $raceNumber);
-        $response += $this->scrapeQuinella($scraper2, $raceStadiumNumber, $raceNumber);
-        $response += $this->scrapeQuinellaPlace($scraper3, $raceStadiumNumber, $raceNumber);
-        $response += $this->scrapeTrifecta($scraper4, $raceStadiumNumber, $raceNumber);
-        $response += $this->scrapeTrio($scraper5, $raceStadiumNumber, $raceNumber);
-
-        return $response;
-    }
-
-    /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  int                                    $raceStadiumNumber
-     * @param  int                                    $raceNumber
-     * @return array
-     */
-    private function scrapeWin(Crawler $scraper, int $raceStadiumNumber, int $raceNumber): array
-    {
-        $response = [];
 
         $win1XPath = sprintf('%s/div[2]/div[%s]/div[1]/div[2]/table/tbody[1]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
         $win2XPath = sprintf('%s/div[2]/div[%s]/div[1]/div[2]/table/tbody[2]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
@@ -103,14 +83,31 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  int                                    $raceStadiumNumber
-     * @param  int                                    $raceNumber
+     * @param  \Carbon\CarbonInterface  $raceDate
+     * @param  int                      $raceStadiumNumber
+     * @param  int                      $raceNumber
      * @return array
      */
-    private function scrapePlace(Crawler $scraper, int $raceStadiumNumber, int $raceNumber): array
+    public function scrapePlace(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
     {
         $response = [];
+
+        $response['race_date'] = $raceDate->format('Y-m-d');
+        $response['race_stadium_number'] = $raceStadiumNumber;
+        $response['race_number'] = $raceNumber;
+
+        $scraperFormat = '%s/owpc/pc/race/oddstf?hd=%s&jcd=%02d&rno=%d';
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        sleep($this->seconds);
+
+        $levelFormat = '%s/div[2]/div[3]/ul/li';
+        $levelXPath = sprintf($levelFormat, $this->baseXPath);
+
+        $this->baseLevel = 0;
+        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+            $this->baseLevel = 1;
+        }
 
         $place1XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[1]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
         $place2XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[2]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
@@ -130,14 +127,31 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  int                                    $raceStadiumNumber
-     * @param  int                                    $raceNumber
+     * @param  \Carbon\CarbonInterface  $raceDate
+     * @param  int                      $raceStadiumNumber
+     * @param  int                      $raceNumber
      * @return array
      */
-    private function scrapeExacta(Crawler $scraper, int $raceStadiumNumber, int $raceNumber): array
+    public function scrapeExacta(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
     {
         $response = [];
+
+        $response['race_date'] = $raceDate->format('Y-m-d');
+        $response['race_stadium_number'] = $raceStadiumNumber;
+        $response['race_number'] = $raceNumber;
+
+        $scraperFormat = '%s/owpc/pc/race/odds2tf?hd=%s&jcd=%02d&rno=%d';
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        sleep($this->seconds);
+
+        $levelFormat = '%s/div[2]/div[3]/ul/li';
+        $levelXPath = sprintf($levelFormat, $this->baseXPath);
+
+        $this->baseLevel = 0;
+        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+            $this->baseLevel = 1;
+        }
 
         $exacta12XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[2]', $this->baseXPath, $this->baseLevel + 7);
         $exacta13XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[2]', $this->baseXPath, $this->baseLevel + 7);
@@ -205,14 +219,31 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  int                                    $raceStadiumNumber
-     * @param  int                                    $raceNumber
+     * @param  \Carbon\CarbonInterface  $raceDate
+     * @param  int                      $raceStadiumNumber
+     * @param  int                      $raceNumber
      * @return array
      */
-    private function scrapeQuinella(Crawler $scraper, int $raceStadiumNumber, int $raceNumber): array
+    public function scrapeQuinella(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
     {
         $response = [];
+
+        $response['race_date'] = $raceDate->format('Y-m-d');
+        $response['race_stadium_number'] = $raceStadiumNumber;
+        $response['race_number'] = $raceNumber;
+
+        $scraperFormat = '%s/owpc/pc/race/odds2tf?hd=%s&jcd=%02d&rno=%d';
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        sleep($this->seconds);
+
+        $levelFormat = '%s/div[2]/div[3]/ul/li';
+        $levelXPath = sprintf($levelFormat, $this->baseXPath);
+
+        $this->baseLevel = 0;
+        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+            $this->baseLevel = 1;
+        }
 
         $quinella12XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[2]', $this->baseXPath, $this->baseLevel + 9);
         $quinella13XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[2]', $this->baseXPath, $this->baseLevel + 9);
@@ -250,14 +281,31 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  int                                    $raceStadiumNumber
-     * @param  int                                    $raceNumber
+     * @param  \Carbon\CarbonInterface  $raceDate
+     * @param  int                      $raceStadiumNumber
+     * @param  int                      $raceNumber
      * @return array
      */
-    private function scrapeQuinellaPlace(Crawler $scraper, int $raceStadiumNumber, int $raceNumber): array
+    public function scrapeQuinellaPlace(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
     {
         $response = [];
+
+        $response['race_date'] = $raceDate->format('Y-m-d');
+        $response['race_stadium_number'] = $raceStadiumNumber;
+        $response['race_number'] = $raceNumber;
+
+        $scraperFormat = '%s/owpc/pc/race/oddsk?hd=%s&jcd=%02d&rno=%d';
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        sleep($this->seconds);
+
+        $levelFormat = '%s/div[2]/div[3]/ul/li';
+        $levelXPath = sprintf($levelFormat, $this->baseXPath);
+
+        $this->baseLevel = 0;
+        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+            $this->baseLevel = 1;
+        }
 
         $quinellaPlace12XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[2]', $this->baseXPath, $this->baseLevel + 7);
         $quinellaPlace13XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[2]', $this->baseXPath, $this->baseLevel + 7);
@@ -295,14 +343,31 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  int                                    $raceStadiumNumber
-     * @param  int                                    $raceNumber
+     * @param  \Carbon\CarbonInterface  $raceDate
+     * @param  int                      $raceStadiumNumber
+     * @param  int                      $raceNumber
      * @return array
      */
-    private function scrapeTrifecta(Crawler $scraper, int $raceStadiumNumber, int $raceNumber): array
+    public function scrapeTrifecta(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
     {
         $response = [];
+
+        $response['race_date'] = $raceDate->format('Y-m-d');
+        $response['race_stadium_number'] = $raceStadiumNumber;
+        $response['race_number'] = $raceNumber;
+
+        $scraperFormat = '%s/owpc/pc/race/odds3t?hd=%s&jcd=%02d&rno=%d';
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        sleep($this->seconds);
+
+        $levelFormat = '%s/div[2]/div[3]/ul/li';
+        $levelXPath = sprintf($levelFormat, $this->baseXPath);
+
+        $this->baseLevel = 0;
+        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+            $this->baseLevel = 1;
+        }
 
         $trifecta123XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[3]', $this->baseXPath, $this->baseLevel + 7);
         $trifecta124XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[2]', $this->baseXPath, $this->baseLevel + 7);
@@ -550,14 +615,31 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  int                                    $raceStadiumNumber
-     * @param  int                                    $raceNumber
+     * @param  \Carbon\CarbonInterface  $raceDate
+     * @param  int                      $raceStadiumNumber
+     * @param  int                      $raceNumber
      * @return array
      */
-    private function scrapeTrio(Crawler $scraper, int $raceStadiumNumber, int $raceNumber): array
+    public function scrapeTrio(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
     {
         $response = [];
+
+        $response['race_date'] = $raceDate->format('Y-m-d');
+        $response['race_stadium_number'] = $raceStadiumNumber;
+        $response['race_number'] = $raceNumber;
+
+        $scraperFormat = '%s/owpc/pc/race/odds3f?hd=%s&jcd=%02d&rno=%d';
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        sleep($this->seconds);
+
+        $levelFormat = '%s/div[2]/div[3]/ul/li';
+        $levelXPath = sprintf($levelFormat, $this->baseXPath);
+
+        $this->baseLevel = 0;
+        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+            $this->baseLevel = 1;
+        }
 
         $trio123XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[3]', $this->baseXPath, $this->baseLevel + 7);
         $trio124XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[2]', $this->baseXPath, $this->baseLevel + 7);

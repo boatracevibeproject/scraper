@@ -30,6 +30,13 @@ class ScraperCore implements ScraperCoreInterface
      */
     private array $scraperClasses = [
         'scrapeOddses' => OddsScraper::class,
+        'scrapeWinOddses' => OddsScraper::class,
+        'scrapePlaceOddses' => OddsScraper::class,
+        'scrapeExactaOddses' => OddsScraper::class,
+        'scrapeQuinellaOddses' => OddsScraper::class,
+        'scrapeQuinellaPlaceOddses' => OddsScraper::class,
+        'scrapeTrifectaOddses' => OddsScraper::class,
+        'scrapeTrioOddses' => OddsScraper::class,
         'scrapePreviews' => PreviewScraper::class,
         'scrapePrograms' => ProgramScraper::class,
         'scrapeResults' => ResultScraper::class,
@@ -70,6 +77,14 @@ class ScraperCore implements ScraperCoreInterface
         $scraper = $this->getScraperInstance($name);
 
         $raceDate = Carbon::parse($raceDate);
+
+        if (preg_match('/^scrape([a-zA-Z]+)Oddses$/u', $name, $matches)) {
+            return $scraper->{'scrape' . $matches[1]}(
+                $raceDate,
+                $raceStadiumNumber,
+                $raceNumber
+            );
+        }
 
         if (str_starts_with($name, 'scrapeStadium')) {
             return $scraper->{match ($name) {
