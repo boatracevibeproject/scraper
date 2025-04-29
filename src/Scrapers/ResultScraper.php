@@ -103,6 +103,15 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
         $racerBoatNumberFormat = '%s/div[2]/div[%s]/div[2]/div/table/tbody/tr[%s]/td/div/span[1]';
         $racerStartTimingFormat = '%s/div[2]/div[%s]/div[2]/div/table/tbody/tr[%s]/td/div/span[3]/span';
 
+        foreach (range(1, 6) as $boatNumber) {
+            $response['boats'][$boatNumber]['racer_boat_number'] = $boatNumber;
+            $response['boats'][$boatNumber]['racer_course_number'] = null;
+            $response['boats'][$boatNumber]['racer_start_timing'] = null;
+            $response['boats'][$boatNumber]['racer_place_number'] = null;
+            $response['boats'][$boatNumber]['racer_number'] = null;
+            $response['boats'][$boatNumber]['racer_name'] = null;
+        }
+
         foreach (range(1, 6) as $courseNumber) {
             $racerBoatNumberXPath = sprintf($racerBoatNumberFormat, $this->baseXPath, $this->baseLevel + 5, $courseNumber);
             $racerStartTimingXPath = sprintf($racerStartTimingFormat, $this->baseXPath, $this->baseLevel + 5, $courseNumber);
@@ -110,8 +119,12 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
             $racerBoatNumber = $this->filterXPath($scraper, $racerBoatNumberXPath);
             $racerStartTiming = $this->filterXPath($scraper, $racerStartTimingXPath);
 
-            $racerCourseNumber = is_null($racerBoatNumber) ? null : $courseNumber;
-            $racerBoatNumber = Converter::convertToInt($racerBoatNumber) ?? $courseNumber;
+            if (is_null($racerBoatNumber)) {
+                continue;
+            }
+
+            $racerCourseNumber = $courseNumber;
+            $racerBoatNumber = Converter::convertToInt($racerBoatNumber);
             $racerStartTiming = Converter::parseStartTiming($racerStartTiming);
 
             $response['boats'][$racerBoatNumber]['racer_boat_number'] = $racerBoatNumber;
@@ -135,8 +148,12 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
             $racerNumber = $this->filterXPath($scraper, $racerNumberXPath);
             $racerName = $this->filterXPath($scraper, $racerNameXPath);
 
+            if (is_null($racerBoatNumber)) {
+                continue;
+            }
+
             $racerPlaceNumber = Converter::convertToPlaceNumber($racerPlaceName);
-            $racerBoatNumber = Converter::convertToInt($racerBoatNumber) ?? $placeNumber;
+            $racerBoatNumber = Converter::convertToInt($racerBoatNumber);
             $racerNumber = Converter::convertToInt($racerNumber);
             $racerName = Converter::convertToName($racerName);
 
