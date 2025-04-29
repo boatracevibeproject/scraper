@@ -84,6 +84,10 @@ class ScraperCore implements ScraperCoreInterface
             );
         }
 
+        if ($name === 'scrapeStadiums') {
+            return $scraper->scrape($raceDate);
+        }
+
         $raceStadiumNumbers = $this->getRaceStadiumNumbers($raceDate, $raceStadiumNumber);
         $raceNumbers = $this->getRaceNumbers($raceNumber);
 
