@@ -76,14 +76,6 @@ class ScraperCore implements ScraperCoreInterface
 
         $raceDate = Carbon::parse($raceDate);
 
-        if (preg_match('/^scrape([a-zA-Z]+)Oddses$/u', $name, $matches)) {
-            return $scraper->{'scrape' . $matches[1]}(
-                $raceDate,
-                $raceStadiumNumber,
-                $raceNumber
-            );
-        }
-
         if ($name === 'scrapeStadiums') {
             return $scraper->scrape($raceDate);
         }
@@ -94,11 +86,19 @@ class ScraperCore implements ScraperCoreInterface
         $response = [];
         foreach ($raceStadiumNumbers as $raceStadiumNumber) {
             foreach ($raceNumbers as $raceNumber) {
-                $response[$raceStadiumNumber][$raceNumber] = $scraper->scrape(
-                    $raceDate,
-                    $raceStadiumNumber,
-                    $raceNumber
-                );
+                if (preg_match('/^scrape([a-zA-Z]+)Oddses$/u', $name, $matches)) {
+                    $response[$raceStadiumNumber][$raceNumber] = $scraper->{'scrape' . $matches[1]}(
+                        $raceDate,
+                        $raceStadiumNumber,
+                        $raceNumber
+                    );
+                } else {
+                    $response[$raceStadiumNumber][$raceNumber] = $scraper->scrape(
+                        $raceDate,
+                        $raceStadiumNumber,
+                        $raceNumber
+                    );
+                }
             }
         }
 
