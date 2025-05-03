@@ -32,6 +32,8 @@ final class PreviewScraperDataProvider
                     'boats' => [
                         1 => [
                             'racer_boat_number' => 1,
+                            'racer_course_number' => 1,
+                            'racer_start_timing' => 0.15,
                             'racer_weight' => 54.0,
                             'racer_weight_adjustment' => 0.0,
                             'racer_exhibition_time' => 6.86,
@@ -39,6 +41,8 @@ final class PreviewScraperDataProvider
                         ],
                         2 => [
                             'racer_boat_number' => 2,
+                            'racer_course_number' => 2,
+                            'racer_start_timing' => 0.22,
                             'racer_weight' => 54.2,
                             'racer_weight_adjustment' => 0.0,
                             'racer_exhibition_time' => 6.89,
@@ -46,6 +50,8 @@ final class PreviewScraperDataProvider
                         ],
                         3 => [
                             'racer_boat_number' => 3,
+                            'racer_course_number' => 3,
+                            'racer_start_timing' => 0.19,
                             'racer_weight' => 52.6,
                             'racer_weight_adjustment' => 0.0,
                             'racer_exhibition_time' => 6.88,
@@ -53,6 +59,8 @@ final class PreviewScraperDataProvider
                         ],
                         4 => [
                             'racer_boat_number' => 4,
+                            'racer_course_number' => 4,
+                            'racer_start_timing' => 0.18,
                             'racer_weight' => 51.2,
                             'racer_weight_adjustment' => 0.0,
                             'racer_exhibition_time' => 6.80,
@@ -60,6 +68,8 @@ final class PreviewScraperDataProvider
                         ],
                         5 => [
                             'racer_boat_number' => 5,
+                            'racer_course_number' => 5,
+                            'racer_start_timing' => 0.05,
                             'racer_weight' => 51.6,
                             'racer_weight_adjustment' => 0.0,
                             'racer_exhibition_time' => 6.81,
@@ -67,42 +77,12 @@ final class PreviewScraperDataProvider
                         ],
                         6 => [
                             'racer_boat_number' => 6,
+                            'racer_course_number' => 6,
+                            'racer_start_timing' => 0.11,
                             'racer_weight' => 47.5,
                             'racer_weight_adjustment' => 0.0,
                             'racer_exhibition_time' => 6.76,
                             'racer_tilt_adjustment' => -0.5,
-                        ],
-                    ],
-                    'courses' => [
-                        1 => [
-                            'racer_course_number' => 1,
-                            'racer_boat_number' => 1,
-                            'racer_start_timing' => 0.15,
-                        ],
-                        2 => [
-                            'racer_course_number' => 2,
-                            'racer_boat_number' => 2,
-                            'racer_start_timing' => 0.22,
-                        ],
-                        3 => [
-                            'racer_course_number' => 3,
-                            'racer_boat_number' => 3,
-                            'racer_start_timing' => 0.19,
-                        ],
-                        4 => [
-                            'racer_course_number' => 4,
-                            'racer_boat_number' => 4,
-                            'racer_start_timing' => 0.18,
-                        ],
-                        5 => [
-                            'racer_course_number' => 5,
-                            'racer_boat_number' => 5,
-                            'racer_start_timing' => 0.05,
-                        ],
-                        6 => [
-                            'racer_course_number' => 6,
-                            'racer_boat_number' => 6,
-                            'racer_start_timing' => 0.11,
                         ],
                     ],
                 ],
@@ -122,6 +102,8 @@ final class PreviewScraperDataProvider
                     'boats' => [
                         1 => [
                             'racer_boat_number' => 1,
+                            'racer_course_number' => null,
+                            'racer_start_timing' => null,
                             'racer_weight' => null,
                             'racer_weight_adjustment' => null,
                             'racer_exhibition_time' => null,
@@ -129,6 +111,8 @@ final class PreviewScraperDataProvider
                         ],
                         2 => [
                             'racer_boat_number' => 2,
+                            'racer_course_number' => null,
+                            'racer_start_timing' => null,
                             'racer_weight' => null,
                             'racer_weight_adjustment' => null,
                             'racer_exhibition_time' => null,
@@ -136,6 +120,8 @@ final class PreviewScraperDataProvider
                         ],
                         3 => [
                             'racer_boat_number' => 3,
+                            'racer_course_number' => null,
+                            'racer_start_timing' => null,
                             'racer_weight' => null,
                             'racer_weight_adjustment' => null,
                             'racer_exhibition_time' => null,
@@ -143,6 +129,8 @@ final class PreviewScraperDataProvider
                         ],
                         4 => [
                             'racer_boat_number' => 4,
+                            'racer_course_number' => null,
+                            'racer_start_timing' => null,
                             'racer_weight' => null,
                             'racer_weight_adjustment' => null,
                             'racer_exhibition_time' => null,
@@ -150,6 +138,8 @@ final class PreviewScraperDataProvider
                         ],
                         5 => [
                             'racer_boat_number' => 5,
+                            'racer_course_number' => null,
+                            'racer_start_timing' => null,
                             'racer_weight' => null,
                             'racer_weight_adjustment' => null,
                             'racer_exhibition_time' => null,
@@ -157,42 +147,12 @@ final class PreviewScraperDataProvider
                         ],
                         6 => [
                             'racer_boat_number' => 6,
+                            'racer_course_number' => null,
+                            'racer_start_timing' => null,
                             'racer_weight' => null,
                             'racer_weight_adjustment' => null,
                             'racer_exhibition_time' => null,
                             'racer_tilt_adjustment' => null,
-                        ],
-                    ],
-                    'courses' => [
-                        1 => [
-                            'racer_course_number' => 1,
-                            'racer_boat_number' => null,
-                            'racer_start_timing' => null,
-                        ],
-                        2 => [
-                            'racer_course_number' => 2,
-                            'racer_boat_number' => null,
-                            'racer_start_timing' => null,
-                        ],
-                        3 => [
-                            'racer_course_number' => 3,
-                            'racer_boat_number' => null,
-                            'racer_start_timing' => null,
-                        ],
-                        4 => [
-                            'racer_course_number' => 4,
-                            'racer_boat_number' => null,
-                            'racer_start_timing' => null,
-                        ],
-                        5 => [
-                            'racer_course_number' => 5,
-                            'racer_boat_number' => null,
-                            'racer_start_timing' => null,
-                        ],
-                        6 => [
-                            'racer_course_number' => 6,
-                            'racer_boat_number' => null,
-                            'racer_start_timing' => null,
                         ],
                     ],
                 ],

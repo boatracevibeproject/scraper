@@ -80,7 +80,6 @@ class PreviewScraper extends BaseScraper implements PreviewScraperInterface
         $response['race_water_temperature'] = $raceWaterTemperature;
 
         $response += $this->scrapeBoats($scraper, $raceStadiumNumber, $raceNumber);
-        $response += $this->scrapeCourses($scraper, $raceStadiumNumber, $raceNumber);
 
         return $response;
     }
@@ -95,18 +94,51 @@ class PreviewScraper extends BaseScraper implements PreviewScraperInterface
     {
         $response = [];
 
+        foreach (range(1, 6) as $boatNumber) {
+            $response['boats'][$boatNumber]['racer_boat_number'] = $boatNumber;
+            $response['boats'][$boatNumber]['racer_course_number'] = null;
+            $response['boats'][$boatNumber]['racer_start_timing'] = null;
+            $response['boats'][$boatNumber]['racer_weight'] = null;
+            $response['boats'][$boatNumber]['racer_weight_adjustment'] = null;
+            $response['boats'][$boatNumber]['racer_exhibition_time'] = null;
+            $response['boats'][$boatNumber]['racer_tilt_adjustment'] = null;
+        }
+
+        $racerBoatNumberFormat = '%s/div[2]/div[%s]/div[2]/div[1]/table/tbody/tr[%s]/td/div/span[1]';
+        $racerStartTimingFormat = '%s/div[2]/div[%s]/div[2]/div[1]/table/tbody/tr[%s]/td/div/span[3]';
+
+        foreach (range(1, 6) as $courseNumber) {
+            $racerBoatNumberXPath = sprintf($racerBoatNumberFormat, $this->baseXPath, $this->baseLevel + 5, $courseNumber);
+            $racerStartTimingXPath = sprintf($racerStartTimingFormat, $this->baseXPath, $this->baseLevel + 5, $courseNumber);
+
+            $racerBoatNumber = $this->filterXPath($scraper, $racerBoatNumberXPath);
+            $racerStartTiming = $this->filterXPath($scraper, $racerStartTimingXPath);
+
+            if (is_null($racerBoatNumber)) {
+                continue;
+            }
+
+            $racerCourseNumber = $courseNumber;
+            $racerBoatNumber = Converter::convertToInt($racerBoatNumber);
+            $racerStartTiming = Converter::parseStartTiming($racerStartTiming);
+
+            $response['boats'][$racerBoatNumber]['racer_boat_number'] = $racerBoatNumber;
+            $response['boats'][$racerBoatNumber]['racer_course_number'] = $racerCourseNumber;
+            $response['boats'][$racerBoatNumber]['racer_start_timing'] = $racerStartTiming;
+        }
+
         $racerBoatNumberFormat = '%s/div[2]/div[%s]/div[1]/div[1]/table/tbody[%s]/tr[1]/td[1]';
         $racerWeightFormat = '%s/div[2]/div[%s]/div[1]/div[1]/table/tbody[%s]/tr[1]/td[4]';
         $racerWeightAdjustmentFormat = '%s/div[2]/div[%s]/div[1]/div[1]/table/tbody[%s]/tr[3]/td[1]';
         $racerExhibitionTimeFormat = '%s/div[2]/div[%s]/div[1]/div[1]/table/tbody[%s]/tr[1]/td[5]';
         $racerTiltAdjustmentFormat = '%s/div[2]/div[%s]/div[1]/div[1]/table/tbody[%s]/tr[1]/td[6]';
 
-        foreach (range(1, 6) as $index) {
-            $racerBoatNumberXPath = sprintf($racerBoatNumberFormat, $this->baseXPath, $this->baseLevel + 5, $index);
-            $racerWeightXPath = sprintf($racerWeightFormat, $this->baseXPath, $this->baseLevel + 5, $index);
-            $racerWeightAdjustmentXPath = sprintf($racerWeightAdjustmentFormat, $this->baseXPath, $this->baseLevel + 5, $index);
-            $racerExhibitionTimeXPath = sprintf($racerExhibitionTimeFormat, $this->baseXPath, $this->baseLevel + 5, $index);
-            $racerTiltAdjustmentXPath = sprintf($racerTiltAdjustmentFormat, $this->baseXPath, $this->baseLevel + 5, $index);
+        foreach (range(1, 6) as $boatNumber) {
+            $racerBoatNumberXPath = sprintf($racerBoatNumberFormat, $this->baseXPath, $this->baseLevel + 5, $boatNumber);
+            $racerWeightXPath = sprintf($racerWeightFormat, $this->baseXPath, $this->baseLevel + 5, $boatNumber);
+            $racerWeightAdjustmentXPath = sprintf($racerWeightAdjustmentFormat, $this->baseXPath, $this->baseLevel + 5, $boatNumber);
+            $racerExhibitionTimeXPath = sprintf($racerExhibitionTimeFormat, $this->baseXPath, $this->baseLevel + 5, $boatNumber);
+            $racerTiltAdjustmentXPath = sprintf($racerTiltAdjustmentFormat, $this->baseXPath, $this->baseLevel + 5, $boatNumber);
 
             $racerBoatNumber = $this->filterXPath($scraper, $racerBoatNumberXPath);
             $racerWeight = $this->filterXPath($scraper, $racerWeightXPath);
@@ -114,7 +146,11 @@ class PreviewScraper extends BaseScraper implements PreviewScraperInterface
             $racerExhibitionTime = $this->filterXPath($scraper, $racerExhibitionTimeXPath);
             $racerTiltAdjustment = $this->filterXPath($scraper, $racerTiltAdjustmentXPath);
 
-            $racerBoatNumber = Converter::convertToInt($racerBoatNumber ?? $index);
+            if (is_null($racerBoatNumber)) {
+                continue;
+            }
+
+            $racerBoatNumber = Converter::convertToInt($racerBoatNumber);
             $racerWeight = Converter::convertToFloat($racerWeight);
             $racerWeightAdjustment = Converter::convertToFloat($racerWeightAdjustment);
             $racerExhibitionTime = Converter::convertToFloat($racerExhibitionTime);
@@ -127,36 +163,7 @@ class PreviewScraper extends BaseScraper implements PreviewScraperInterface
             $response['boats'][$racerBoatNumber]['racer_tilt_adjustment'] = $racerTiltAdjustment;
         }
 
-        return $response;
-    }
-
-    /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  int                                    $raceStadiumNumber
-     * @param  int                                    $raceNumber
-     * @return array
-     */
-    private function scrapeCourses(Crawler $scraper, int $raceStadiumNumber, int $raceNumber): array
-    {
-        $response = [];
-
-        $racerBoatNumberFormat = '%s/div[2]/div[%s]/div[2]/div[1]/table/tbody/tr[%s]/td/div/span[1]';
-        $racerStartTimingFormat = '%s/div[2]/div[%s]/div[2]/div[1]/table/tbody/tr[%s]/td/div/span[3]';
-
-        foreach (range(1, 6) as $index) {
-            $racerBoatNumberXPath = sprintf($racerBoatNumberFormat, $this->baseXPath, $this->baseLevel + 5, $index);
-            $racerStartTimingXPath = sprintf($racerStartTimingFormat, $this->baseXPath, $this->baseLevel + 5, $index);
-
-            $racerBoatNumber = $this->filterXPath($scraper, $racerBoatNumberXPath);
-            $racerStartTiming = $this->filterXPath($scraper, $racerStartTimingXPath);
-
-            $racerBoatNumber = Converter::convertToInt($racerBoatNumber);
-            $racerStartTiming = Converter::parseStartTiming($racerStartTiming);
-
-            $response['courses'][$index]['racer_course_number'] = $index;
-            $response['courses'][$index]['racer_boat_number'] = $racerBoatNumber;
-            $response['courses'][$index]['racer_start_timing'] = $racerStartTiming;
-        }
+        ksort($response['boats']);
 
         return $response;
     }
