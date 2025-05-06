@@ -29,14 +29,14 @@ class ScraperCore implements ScraperCoreInterface
      * @var array
      */
     private array $scraperClasses = [
-        'scrapeOddses' => OddsScraper::class,
-        'scrapeWinOddses' => OddsScraper::class,
-        'scrapePlaceOddses' => OddsScraper::class,
-        'scrapeExactaOddses' => OddsScraper::class,
-        'scrapeQuinellaOddses' => OddsScraper::class,
-        'scrapeQuinellaPlaceOddses' => OddsScraper::class,
-        'scrapeTrifectaOddses' => OddsScraper::class,
-        'scrapeTrioOddses' => OddsScraper::class,
+        'scrapeOdds' => OddsScraper::class,
+        'scrapeWinOdds' => OddsScraper::class,
+        'scrapePlaceOdds' => OddsScraper::class,
+        'scrapeExactaOdds' => OddsScraper::class,
+        'scrapeQuinellaOdds' => OddsScraper::class,
+        'scrapeQuinellaPlaceOdds' => OddsScraper::class,
+        'scrapeTrifectaOdds' => OddsScraper::class,
+        'scrapeTrioOdds' => OddsScraper::class,
         'scrapePreviews' => PreviewScraper::class,
         'scrapePrograms' => ProgramScraper::class,
         'scrapeResults' => ResultScraper::class,

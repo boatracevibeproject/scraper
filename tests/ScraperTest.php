@@ -22,7 +22,7 @@ final class ScraperTest extends TestCase
     #[DataProviderExternal(ScraperCoreDataProvider::class, 'scrapeOddsesProvider')]
     public function testScrapeOddses(array $arguments, array $expected): void
     {
-        $this->assertSame($expected, Scraper::scrapeOddses(...$arguments));
+        $this->assertSame($expected, Scraper::scrapeOdds(...$arguments));
     }
 
     /**
