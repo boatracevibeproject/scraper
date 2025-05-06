@@ -14,10 +14,14 @@
             "email": "bvp@shimomo.net"
         }
     ],
+    "support": {
+        "issues": "https://github.com/shimomo/bvp-boatrace-scraper/issues",
+        "source": "https://github.com/shimomo/bvp-boatrace-scraper"
+    },
     "require": {
         "php": "^8.2",
-        "bvp/converter": "^4.0",
-        "bvp/trimmer": "^4.0",
+        "bvp/converter": "^5.x-dev",
+        "bvp/trimmer": "^5.x-dev",
         "nesbot/carbon": "^2.63 || ^3.0",
         "symfony/browser-kit": "^6.0 || ^7.0",
         "symfony/css-selector": "^6.0 || ^7.0",
