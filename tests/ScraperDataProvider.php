@@ -25,7 +25,7 @@ final class ScraperDataProvider
                             'race_date' => '2017-03-31',
                             'race_stadium_number' => 24,
                             'race_number' => 1,
-                            'win_oddses' => [
+                            'win_odds' => [
                                 1 => 1.0,
                                 2 => 25.6,
                                 3 => 33.5,
@@ -33,7 +33,7 @@ final class ScraperDataProvider
                                 5 => 31.1,
                                 6 => 218.2,
                             ],
-                            'place_oddses' => [
+                            'place_odds' => [
                                 1 => [
                                     'lower_limit' => 1.0,
                                     'upper_limit' => 1.0,
@@ -59,7 +59,7 @@ final class ScraperDataProvider
                                     'upper_limit' => 86.6,
                                 ],
                             ],
-                            'exacta_oddses' => [
+                            'exacta_odds' => [
                                 1 => [
                                     2 => 1.8,
                                     3 => 7.7,
@@ -103,7 +103,7 @@ final class ScraperDataProvider
                                     5 => 359.0,
                                 ],
                             ],
-                            'quinella_oddses' => [
+                            'quinella_odds' => [
                                 1 => [
                                     2 => 1.5,
                                     3 => 9.0,
@@ -130,7 +130,7 @@ final class ScraperDataProvider
                                     6 => 109.6,
                                 ],
                             ],
-                            'quinella_place_oddses' => [
+                            'quinella_place_odds' => [
                                 1 => [
                                     2 => [
                                         'lower_limit' => 1.0,
@@ -202,7 +202,7 @@ final class ScraperDataProvider
                                     ],
                                 ],
                             ],
-                            'trifecta_oddses' => [
+                            'trifecta_odds' => [
                                 1 => [
                                     2 => [
                                         3 => 9.4,
@@ -396,7 +396,7 @@ final class ScraperDataProvider
                                     ],
                                 ],
                             ],
-                            'trio_oddses' => [
+                            'trio_odds' => [
                                 1 => [
                                     2 => [
                                         3 => 6.5,
@@ -458,7 +458,7 @@ final class ScraperDataProvider
                             'race_date' => '2019-10-14',
                             'race_stadium_number' => 2,
                             'race_number' => 1,
-                            'win_oddses' => [
+                            'win_odds' => [
                                 1 => null,
                                 2 => null,
                                 3 => null,
@@ -466,7 +466,7 @@ final class ScraperDataProvider
                                 5 => null,
                                 6 => null,
                             ],
-                            'place_oddses' => [
+                            'place_odds' => [
                                 1 => [
                                     'lower_limit' => null,
                                     'upper_limit' => null,
@@ -492,7 +492,7 @@ final class ScraperDataProvider
                                     'upper_limit' => null,
                                 ],
                             ],
-                            'exacta_oddses' => [
+                            'exacta_odds' => [
                                 1 => [
                                     2 => null,
                                     3 => null,
@@ -536,7 +536,7 @@ final class ScraperDataProvider
                                     5 => null,
                                 ],
                             ],
-                            'quinella_oddses' => [
+                            'quinella_odds' => [
                                 1 => [
                                     2 => null,
                                     3 => null,
@@ -563,7 +563,7 @@ final class ScraperDataProvider
                                     6 => null,
                                 ],
                             ],
-                            'quinella_place_oddses' => [
+                            'quinella_place_odds' => [
                                 1 => [
                                     2 => [
                                         'lower_limit' => null,
@@ -635,7 +635,7 @@ final class ScraperDataProvider
                                     ],
                                 ],
                             ],
-                            'trifecta_oddses' => [
+                            'trifecta_odds' => [
                                 1 => [
                                     2 => [
                                         3 => null,
@@ -829,7 +829,7 @@ final class ScraperDataProvider
                                     ],
                                 ],
                             ],
-                            'trio_oddses' => [
+                            'trio_odds' => [
                                 1 => [
                                     2 => [
                                         3 => null,
