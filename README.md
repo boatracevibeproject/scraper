@@ -8,7 +8,7 @@
 
 ## Installation
 ```bash
-composer require bvp/boatrace-scraper
+composer require bvp/boatrace-scraper:5.x-dev
 ```
 
 ## Usage
