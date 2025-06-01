@@ -42,14 +42,17 @@ class ProgramScraper extends BaseScraper implements ProgramScraperInterface
             $this->baseLevel = 1;
         }
 
+        $raceGradeFormat = '%s/div[1]/div/div[2]';
         $raceTitleFormat = '%s/div[1]/div/div[2]/h2';
         $raceSubtitleDistanceFormat = '%s/div[2]/div[%s]/h3';
         $raceDeadlineFormat = '%s/div[2]/div[2]/table/tbody/tr[1]/td[%s]';
 
+        $raceGradeNumberXPath = sprintf($raceGradeFormat, $this->baseXPath);
         $raceTitleXPath = sprintf($raceTitleFormat, $this->baseXPath);
         $raceSubtitleDistanceXPath = sprintf($raceSubtitleDistanceFormat, $this->baseXPath, $this->baseLevel + 3);
         $raceDeadlineXPath = sprintf($raceDeadlineFormat, $this->baseXPath, $raceNumber + 1);
 
+        $raceGradeNumber = $this->filterXPathForGradeNumber($scraper, $raceGradeNumberXPath);
         $raceTitle = $this->filterXPath($scraper, $raceTitleXPath);
         $raceSubtitleDistance = $this->filterXPath($scraper, $raceSubtitleDistanceXPath);
         $raceDeadline = $this->filterXPath($scraper, $raceDeadlineXPath);
@@ -65,6 +68,7 @@ class ProgramScraper extends BaseScraper implements ProgramScraperInterface
         $response['race_stadium_number'] = $raceStadiumNumber;
         $response['race_number'] = $raceNumber;
         $response['race_closed_at'] = $raceClosedAt;
+        $response['race_grade_number'] = $raceGradeNumber;
         $response['race_title'] = $raceTitle;
         $response['race_subtitle'] = $raceSubtitle;
         $response['race_distance'] = $raceDistance;

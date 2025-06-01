@@ -61,6 +61,37 @@ abstract class BaseScraper
     /**
      * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
      * @param  string                                 $xpath
+     * @return int|null
+     */
+    protected function filterXPathForGradeNumber(Crawler $scraper, string $xpath): ?int
+    {
+        if (!$scraper->filterXPath($xpath)->count()) {
+            return null;
+        }
+
+        $value = $scraper->filterXPath($xpath)->attr('class');
+        $value = Converter::convertToString($value);
+        $value = Trimmer::trim($value);
+
+        if (preg_match('/is-([a-zA-Z0-9]+)/', $value, $matches)) {
+            if ($matches[1] === 'ippan') {
+                return 5;
+            }
+
+            return match(substr($matches[1], 0, 2)) {
+                'SG' => 1,
+                'G1' => 2,
+                'G2' => 3,
+                'G3' => 4,
+            };
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
+     * @param  string                                 $xpath
      * @return string
      */
     protected function filterXPathForWindDirectionNumber(Crawler $scraper, string $xpath): ?string
