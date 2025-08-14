@@ -1,14 +1,14 @@
 # BVP Boatrace Scraper
 
-[![Build Status](https://github.com/shimomo/bvp-boatrace-scraper/workflows/Tests/badge.svg)](https://github.com/shimomo/bvp-boatrace-scraper/actions?query=workflow%3Atests)
-[![codecov](https://codecov.io/gh/shimomo/bvp-boatrace-scraper/branch/5.x/graph/badge.svg?token=1J6TVAC5FR)](https://codecov.io/gh/shimomo/bvp-boatrace-scraper)
-[![Latest Stable Version](https://poser.pugx.org/bvp/boatrace-scraper/v/stable)](https://packagist.org/packages/bvp/boatrace-scraper)
-[![Latest Unstable Version](https://poser.pugx.org/bvp/boatrace-scraper/v/unstable)](https://packagist.org/packages/bvp/boatrace-scraper#5.x-dev)
-[![License](https://poser.pugx.org/bvp/boatrace-scraper/license)](https://packagist.org/packages/bvp/boatrace-scraper)
+[![tests](https://github.com/shimomo/bvp-boatrace-scraper/actions/workflows/tests.yml/badge.svg)](https://github.com/shimomo/bvp-boatrace-scraper/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/shimomo/bvp-boatrace-scraper/graph/badge.svg?token=1J6TVAC5FR)](https://codecov.io/gh/shimomo/bvp-boatrace-scraper)
+[![stable](https://poser.pugx.org/bvp/boatrace-scraper/v/stable)](https://packagist.org/packages/bvp/boatrace-scraper)
+[![unstable](https://poser.pugx.org/bvp/boatrace-scraper/v/unstable)](https://packagist.org/packages/bvp/boatrace-scraper#5.x-dev)
+[![license](https://poser.pugx.org/bvp/boatrace-scraper/license)](https://packagist.org/packages/bvp/boatrace-scraper)
 
 ## Installation
 ```bash
-composer require bvp/boatrace-scraper:5.x-dev
+composer require bvp/boatrace-scraper
 ```
 
 ## Usage
