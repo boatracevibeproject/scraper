@@ -1,4 +1,4 @@
-name: Tests
+name: tests
 
 on:
   push:
@@ -6,37 +6,40 @@ on:
       - main
       - '*.x'
   pull_request:
-    branches:
-      - main
-      - '*.x'
   schedule:
     - cron: '0 0 * * *'
   workflow_dispatch:
 
 jobs:
   tests:
-    name: PHP ${{ matrix.php-version }}
+    name: PHPUnit Tests on PHP ${{ matrix.php-version }} (Ubuntu 24.04)
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       matrix:
-        php-version: ['8.2', '8.3', '8.4']
+        php-version:
+          - '8.2'
+          - '8.3'
+          - '8.4'
     steps:
-    - name: Setup PHP
+    - name: Setup PHP ${{ matrix.php-version }}
       uses: shivammathur/setup-php@v2
       with:
         php-version: ${{ matrix.php-version }}
         coverage: pcov
 
-    - name: Checkout Code
+    - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Install Composer
+    - name: Install Dependencies
       run: composer install --prefer-dist --no-interaction --no-progress
 
-    - name: Execute PHPUnit
+    - name: Run PHPUnit Tests
       run: vendor/bin/phpunit --coverage-xml=build/coverage-xml
 
-    - name: Upload Codecov
+    - name: Upload Code Coverage to Codecov
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
