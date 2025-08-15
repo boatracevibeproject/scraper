@@ -29,7 +29,7 @@ composer require bvp/scraper
 
 | メソッド | 説明 | 引数 |
 |---|---|---|
-| `Scraper::scrapePrograms(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$raceDate,`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$raceStadiumNumber = null,`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$raceNumber = null`<br>`)` | 出走表を取得 | `$raceDate` : Carbon対応日付文字列<br>&nbsp;&nbsp;&nbsp;&nbsp;またはCarbonインスタンス（省略時は当日）<br>`$raceStadiumNumber` : 1〜12（省略時は全開催場）<br>`$raceNumber` : 1〜12（省略時は全レース） |
+| `Scraper::scrapePrograms(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$raceDate,`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$raceStadiumNumber = null,`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$raceNumber = null`<br>`)` | 出走表を取得 | `$raceDate` : Carbon対応日付文字列<br>&nbsp;&nbsp;&nbsp;&nbsp;またはCarbonインスタンス<br>`$raceStadiumNumber` : 1〜12（省略時は全開催場）<br>`$raceNumber` : 1〜12（省略時は全レース） |
 | `Scraper::scrapePreviews(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$raceDate,`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$raceStadiumNumber = null,`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$raceNumber = null`<br>`)` | 直前情報を取得 | 同上 |
 | `Scraper::scrapeOdds(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$raceDate,`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$raceStadiumNumber = null,`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$raceNumber = null`<br>`)` | オッズを取得 | 同上 |
 | `Scraper::scrapeResults(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$raceDate,`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$raceStadiumNumber = null,`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$raceNumber = null`<br>`)` | 結果を取得 | 同上 |
