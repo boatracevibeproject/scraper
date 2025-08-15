@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace BVP\BoatraceScraper\Tests\Scrapers;
+namespace BVP\Scraper\Tests\Scrapers;
 
-use BVP\BoatraceScraper\Scrapers\ProgramScraper;
+use BVP\Scraper\Scrapers\ProgramScraper;
 use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\BrowserKit\HttpBrowser;
@@ -15,7 +15,7 @@ use Symfony\Component\BrowserKit\HttpBrowser;
 final class ProgramScraperTest extends TestCase
 {
     /**
-     * @var \BVP\BoatraceScraper\Scrapers\ProgramScraper
+     * @var \BVP\Scraper\Scrapers\ProgramScraper
      */
     protected ProgramScraper $scraper;
 

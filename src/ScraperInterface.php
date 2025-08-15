@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BVP\BoatraceScraper;
+namespace BVP\Scraper;
 
 /**
  * @author shimomo
@@ -10,14 +10,14 @@ namespace BVP\BoatraceScraper;
 interface ScraperInterface extends ScraperContractInterface
 {
     /**
-     * @param  \BVP\BoatraceScraper\ScraperCoreInterface|null  $scraperCore
-     * @return \BVP\BoatraceScraper\ScraperInterface
+     * @param  \BVP\Scraper\ScraperCoreInterface|null  $scraperCore
+     * @return \BVP\Scraper\ScraperInterface
      */
     public static function getInstance(?ScraperCoreInterface $scraperCore = null): ScraperInterface;
 
     /**
-     * @param  \BVP\BoatraceScraper\ScraperCoreInterface|null  $scraperCore
-     * @return \BVP\BoatraceScraper\ScraperInterface
+     * @param  \BVP\Scraper\ScraperCoreInterface|null  $scraperCore
+     * @return \BVP\Scraper\ScraperInterface
      */
     public static function createInstance(?ScraperCoreInterface $scraperCore = null): ScraperInterface;
 

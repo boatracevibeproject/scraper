@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace BVP\BoatraceScraper\Scrapers;
+namespace BVP\Scraper\Scrapers;
 
 use BVP\Converter\Converter;
 use BVP\Trimmer\Trimmer;
-use BVP\BoatraceScraper\Traits\HttpBrowserInitializer;
+use BVP\Scraper\Traits\HttpBrowserInitializer;
 use Symfony\Component\BrowserKit\HttpBrowser;
 use Symfony\Component\DomCrawler\Crawler;
 

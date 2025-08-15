@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BVP\BoatraceScraper\Scrapers;
+namespace BVP\Scraper\Scrapers;
 
 use Carbon\CarbonInterface;
 use Symfony\Component\DomCrawler\Crawler;

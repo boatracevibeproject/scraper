@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BVP\BoatraceScraper;
+namespace BVP\Scraper;
 
 /**
  * @author shimomo

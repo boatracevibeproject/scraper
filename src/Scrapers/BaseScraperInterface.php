@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace BVP\BoatraceScraper\Scrapers;
+namespace BVP\Scraper\Scrapers;
 
-use BVP\BoatraceScraper\ScraperContractInterface;
+use BVP\Scraper\ScraperContractInterface;
 
 /**
  * @author shimomo

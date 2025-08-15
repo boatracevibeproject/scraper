@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BVP\BoatraceScraper;
+namespace BVP\Scraper;
 
 /**
  * @author shimomo
@@ -10,12 +10,12 @@ namespace BVP\BoatraceScraper;
 class Scraper implements ScraperInterface
 {
     /**
-     * @var \BVP\BoatraceScraper\ScraperInterface
+     * @var \BVP\Scraper\ScraperInterface
      */
     private static ?ScraperInterface $instance;
 
     /**
-     * @param  \BVP\BoatraceScraper\ScraperCoreInterface  $scraper
+     * @param  \BVP\Scraper\ScraperCoreInterface  $scraper
      * @return void
      */
     public function __construct(private readonly ScraperCoreInterface $scraper) {}
@@ -41,8 +41,8 @@ class Scraper implements ScraperInterface
     }
 
     /**
-     * @param  \BVP\BoatraceScraper\ScraperCoreInterface|null  $scraperCore
-     * @return \BVP\BoatraceScraper\ScraperInterface
+     * @param  \BVP\Scraper\ScraperCoreInterface|null  $scraperCore
+     * @return \BVP\Scraper\ScraperInterface
      */
     public static function getInstance(?ScraperCoreInterface $scraperCore = null): ScraperInterface
     {
@@ -50,8 +50,8 @@ class Scraper implements ScraperInterface
     }
 
     /**
-     * @param  \BVP\BoatraceScraper\ScraperCoreInterface|null  $scraperCore
-     * @return \BVP\BoatraceScraper\ScraperInterface
+     * @param  \BVP\Scraper\ScraperCoreInterface|null  $scraperCore
+     * @return \BVP\Scraper\ScraperInterface
      */
     public static function createInstance(?ScraperCoreInterface $scraperCore = null): ScraperInterface
     {

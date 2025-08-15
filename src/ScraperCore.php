@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace BVP\BoatraceScraper;
+namespace BVP\Scraper;
 
 use BVP\Converter\Converter;
-use BVP\BoatraceScraper\Scrapers\BaseScraperInterface;
-use BVP\BoatraceScraper\Scrapers\OddsScraper;
-use BVP\BoatraceScraper\Scrapers\PreviewScraper;
-use BVP\BoatraceScraper\Scrapers\ProgramScraper;
-use BVP\BoatraceScraper\Scrapers\ResultScraper;
-use BVP\BoatraceScraper\Scrapers\StadiumScraper;
+use BVP\Scraper\Scrapers\BaseScraperInterface;
+use BVP\Scraper\Scrapers\OddsScraper;
+use BVP\Scraper\Scrapers\PreviewScraper;
+use BVP\Scraper\Scrapers\ProgramScraper;
+use BVP\Scraper\Scrapers\ResultScraper;
+use BVP\Scraper\Scrapers\StadiumScraper;
 use Carbon\CarbonImmutable as Carbon;
 use Carbon\CarbonInterface;
 use Symfony\Component\BrowserKit\HttpBrowser;
@@ -124,7 +124,7 @@ class ScraperCore implements ScraperCoreInterface
 
     /**
      * @param  string  $name
-     * @return \BVP\BoatraceScraper\ScraperContractInterface
+     * @return \BVP\Scraper\ScraperContractInterface
      */
     private function getScraperInstance(string $name): ScraperContractInterface
     {
@@ -140,7 +140,7 @@ class ScraperCore implements ScraperCoreInterface
 
     /**
      * @param  string  $name
-     * @return \BVP\BoatraceScraper\ScraperContractInterface
+     * @return \BVP\Scraper\ScraperContractInterface
      */
     private function createScraperInstance(string $name): ScraperContractInterface
     {

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace BVP\BoatraceScraper\Tests;
+namespace BVP\Scraper\Tests;
 
-use BVP\BoatraceScraper\Scraper;
-use BVP\BoatraceScraper\ScraperInterface;
+use BVP\Scraper\Scraper;
+use BVP\Scraper\ScraperInterface;
 use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\TestCase;
 
@@ -76,8 +76,8 @@ final class ScraperTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage(
-            "BVP\BoatraceScraper\ScraperCore::__call() - " .
-            "Too many arguments to function BVP\BoatraceScraper\ScraperCore::invalid(), " .
+            "BVP\Scraper\ScraperCore::__call() - " .
+            "Too many arguments to function BVP\Scraper\ScraperCore::invalid(), " .
             "4 passed and exactly 1-3 expected."
         );
 
@@ -91,7 +91,7 @@ final class ScraperTest extends TestCase
     {
         $this->expectException(\BadMethodCallException::class);
         $this->expectExceptionMessage(
-            "BVP\BoatraceScraper\ScraperCore::resolveScraperClass() - " .
+            "BVP\Scraper\ScraperCore::resolveScraperClass() - " .
             "The scraper name for 'invalid' is invalid."
         );
 
@@ -105,7 +105,7 @@ final class ScraperTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage(
-            "BVP\BoatraceScraper\ScraperCore::getRaceStadiumNumbers() - " .
+            "BVP\Scraper\ScraperCore::getRaceStadiumNumbers() - " .
             "The race stadium number for '#' is invalid."
         );
 
@@ -119,7 +119,7 @@ final class ScraperTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage(
-            "BVP\BoatraceScraper\ScraperCore::getRaceNumbers() - " .
+            "BVP\Scraper\ScraperCore::getRaceNumbers() - " .
             "The race number for '#' is invalid."
         );
 

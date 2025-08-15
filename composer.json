@@ -1,7 +1,7 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "bvp/boatrace-scraper",
-    "description": "The BVP Boatrace Scraper.",
+    "name": "bvp/scraper",
+    "description": "The BVP Scraper for Boatrace.",
     "keywords": [
         "boatrace",
         "library",
@@ -16,8 +16,8 @@
         }
     ],
     "support": {
-        "issues": "https://github.com/shimomo/bvp-boatrace-scraper/issues",
-        "source": "https://github.com/shimomo/bvp-boatrace-scraper"
+        "issues": "https://github.com/shimomo/bvp-scraper/issues",
+        "source": "https://github.com/shimomo/bvp-scraper"
     },
     "require": {
         "php": "^8.2",
@@ -33,12 +33,12 @@
     },
     "autoload": {
         "psr-4": {
-            "BVP\\BoatraceScraper\\": "src/"
+            "BVP\\Scraper\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "BVP\\BoatraceScraper\\Tests\\": "tests/"
+            "BVP\\Scraper\\Tests\\": "tests/"
         }
     },
     "minimum-stability": "stable",

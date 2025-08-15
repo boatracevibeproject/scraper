@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace BVP\BoatraceScraper\Tests;
+namespace BVP\Scraper\Tests;
 
 use Carbon\CarbonImmutable as Carbon;
 
