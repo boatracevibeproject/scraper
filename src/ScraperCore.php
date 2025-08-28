@@ -86,19 +86,23 @@ class ScraperCore implements ScraperCoreInterface
         $response = [];
         foreach ($raceStadiumNumbers as $raceStadiumNumber) {
             foreach ($raceNumbers as $raceNumber) {
-                if (preg_match('/^scrape([a-zA-Z]+)Odds$/u', $name, $matches)) {
-                    $response[$raceStadiumNumber][$raceNumber] = $scraper->{'scrape' . $matches[1]}(
-                        $raceDate,
-                        $raceStadiumNumber,
-                        $raceNumber
-                    );
-                } else {
-                    $response[$raceStadiumNumber][$raceNumber] = $scraper->scrape(
-                        $raceDate,
-                        $raceStadiumNumber,
-                        $raceNumber
-                    );
-                }
+                $response[$raceStadiumNumber][$raceNumber] = $this->callWithRetry(
+                    function() use ($scraper, $name, $raceDate, $raceStadiumNumber, $raceNumber) {
+                        if (preg_match('/^scrape([a-zA-Z]+)Odds$/u', $name, $matches)) {
+                            return $scraper->{'scrape' . $matches[1]}(
+                                $raceDate,
+                                $raceStadiumNumber,
+                                $raceNumber
+                            );
+                        } else {
+                            return $scraper->scrape(
+                                $raceDate,
+                                $raceStadiumNumber,
+                                $raceNumber
+                            );
+                        }
+                    }
+                );
             }
         }
 
@@ -194,6 +198,36 @@ class ScraperCore implements ScraperCoreInterface
 
         throw new \InvalidArgumentException(
             __METHOD__ . "() - The race number for '{$raceNumber}' is invalid."
+        );
+    }
+
+    /**
+     * @param  callable  $callback
+     * @param  int       $maxRetries
+     * @param  int       $retryDelaySeconds
+     * @return mixed
+     * @throws \InvalidArgumentException
+     * @throws \RuntimeException
+     */
+    private function callWithRetry(callable $callback, int $maxRetries = 3, int $retryDelaySeconds = 3): mixed
+    {
+        $attempt = 0;
+
+        while ($attempt < $maxRetries) {
+            $attempt++;
+            try {
+                return $callback();
+            } catch (\RuntimeException $exception) {
+                if ($attempt >= $maxRetries) {
+                    throw $exception;
+                }
+
+                sleep($retryDelaySeconds);
+            }
+        }
+
+        throw new \InvalidArgumentException(
+            __METHOD__ . "() - Invalid retry count."
         );
     }
 }
