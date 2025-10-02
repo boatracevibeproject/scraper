@@ -1,7 +1,7 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
     "name": "bvp/scraper",
-    "description": "The BVP Scraper for Boatrace.",
+    "description": "Scraper for Boatrace Venture Project",
     "keywords": [
         "boatrace",
         "library",
@@ -21,8 +21,8 @@
     },
     "require": {
         "php": "^8.2",
-        "bvp/converter": "^5.0",
-        "bvp/trimmer": "^5.0",
+        "bvp/converter": "^5.3",
+        "bvp/trimmer": "^5.3",
         "nesbot/carbon": "^2.63 || ^3.0",
         "symfony/browser-kit": "^6.0 || ^7.0",
         "symfony/css-selector": "^6.0 || ^7.0",
