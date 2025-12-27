@@ -3,7 +3,6 @@ name: test
 on:
   push:
     branches:
-      - main
       - '*.x'
   pull_request:
   schedule:
@@ -23,6 +22,7 @@ jobs:
           - '8.2'
           - '8.3'
           - '8.4'
+          - '8.5'
         phpunit-version:
           - '10.1'
           - '11.1'
@@ -31,26 +31,26 @@ jobs:
           - php-version: '8.2'
             phpunit-version: '12.0'
     steps:
-    - name: Setup PHP ${{ matrix.php-version }}
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: ${{ matrix.php-version }}
-        coverage: pcov
+      - name: Setup PHP ${{ matrix.php-version }}
+        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: pcov
 
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
 
-    - name: Require PHPUnit ${{ matrix.phpunit-version }}
-      run: composer require --dev phpunit/phpunit:^${{ matrix.phpunit-version }} --with-all-dependencies
+      - name: Require PHPUnit ${{ matrix.phpunit-version }}
+        run: composer require --dev phpunit/phpunit:^${{ matrix.phpunit-version }} --with-all-dependencies
 
-    - name: Install Dependencies
-      run: composer update --prefer-dist --no-interaction --no-progress
+      - name: Install Dependencies
+        run: composer update --prefer-dist --no-interaction --no-progress
 
-    - name: Run PHPUnit ${{ matrix.phpunit-version }}
-      run: vendor/bin/phpunit --coverage-xml=build/coverage-xml
+      - name: Run PHPUnit ${{ matrix.phpunit-version }}
+        run: vendor/bin/phpunit --configuration=phpunit.xml.dist --coverage-xml=build/coverage-xml
 
-    - name: Upload Code Coverage to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        files: build/coverage-xml/coverage.xml
+      - name: Upload Code Coverage to Codecov
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: build/coverage-xml/coverage.xml
