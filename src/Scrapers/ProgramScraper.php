@@ -38,7 +38,7 @@ class ProgramScraper extends BaseScraper implements ProgramScraperInterface
         $levelXPath = sprintf($levelFormat, $this->baseXPath);
 
         $this->baseLevel = 0;
-        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+        if ($this->filterXPath($scraper, $levelXPath) !== null) {
             $this->baseLevel = 1;
         }
 
@@ -68,7 +68,7 @@ class ProgramScraper extends BaseScraper implements ProgramScraperInterface
         $raceDeadline = $this->filterXPath($scraper, $raceDeadlineXPath);
 
         $raceClosedAt = null;
-        if (!is_null($raceDeadline)) {
+        if ($raceDeadline !== null) {
             $raceClosedAt = $raceDate->setTimeFromTimeString($raceDeadline)->format('Y-m-d H:i:s');
         }
 
@@ -176,7 +176,7 @@ class ProgramScraper extends BaseScraper implements ProgramScraperInterface
      */
     private function explodeSubtitleDistance(?string $subtitleDistance = null): array
     {
-        if (is_null($subtitleDistance)) {
+        if ($subtitleDistance === null) {
             return array_fill(0, 2, null);
         }
 
@@ -195,7 +195,7 @@ class ProgramScraper extends BaseScraper implements ProgramScraperInterface
      */
     private function explodeNumberClass(?string $numberClass = null): array
     {
-        if (is_null($numberClass)) {
+        if ($numberClass === null) {
             return array_fill(0, 2, null);
         }
 
@@ -217,7 +217,7 @@ class ProgramScraper extends BaseScraper implements ProgramScraperInterface
      */
     private function explodeBranchBirthplaceAgeWeight(?string $branchBirthplaceAgeWeight = null): array
     {
-        if (is_null($branchBirthplaceAgeWeight)) {
+        if ($branchBirthplaceAgeWeight === null) {
             return array_fill(0, 4, null);
         }
 
@@ -241,7 +241,7 @@ class ProgramScraper extends BaseScraper implements ProgramScraperInterface
      */
     private function explodeFlyingLateStartTiming(?string $flyingLateStartTiming = null): array
     {
-        if (is_null($flyingLateStartTiming)) {
+        if ($flyingLateStartTiming === null) {
             return array_fill(0, 3, null);
         }
 
@@ -264,7 +264,7 @@ class ProgramScraper extends BaseScraper implements ProgramScraperInterface
      */
     private function explodeNationalTop123Percent(?string $nationalTop123Percent = null): array
     {
-        if (is_null($nationalTop123Percent)) {
+        if ($nationalTop123Percent === null) {
             return array_fill(0, 3, null);
         }
 
@@ -287,7 +287,7 @@ class ProgramScraper extends BaseScraper implements ProgramScraperInterface
      */
     private function explodeLocalTop123Percent(?string $localTop123Percent = null): array
     {
-        if (is_null($localTop123Percent)) {
+        if ($localTop123Percent === null) {
             return array_fill(0, 3, null);
         }
 
@@ -310,7 +310,7 @@ class ProgramScraper extends BaseScraper implements ProgramScraperInterface
      */
     private function explodeAssignedMotorNumberMotorTop23Percent(?string $assignedMotorNumberMotorTop23Percent = null): array
     {
-        if (is_null($assignedMotorNumberMotorTop23Percent)) {
+        if ($assignedMotorNumberMotorTop23Percent === null) {
             return array_fill(0, 3, null);
         }
 
@@ -333,7 +333,7 @@ class ProgramScraper extends BaseScraper implements ProgramScraperInterface
      */
     private function explodeAssignedBoatNumberBoatTop23Percent(?string $assignedBoatNumberBoatTop23Percent = null): array
     {
-        if (is_null($assignedBoatNumberBoatTop23Percent)) {
+        if ($assignedBoatNumberBoatTop23Percent === null) {
             return array_fill(0, 3, null);
         }
 

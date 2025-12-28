@@ -70,8 +70,12 @@ class ScraperCore implements ScraperCoreInterface
      * @param  string|int|null                 $raceNumber
      * @return array
      */
-    private function scraper(string $name, CarbonInterface|string $raceDate, string|int|null $raceStadiumNumber = null, string|int|null $raceNumber = null): array
-    {
+    private function scraper(
+        string $name,
+        CarbonInterface|string $raceDate,
+        int|string|null $raceStadiumNumber = null,
+        int|string|null $raceNumber = null
+    ): array {
         $scraper = $this->getScraperInstance($name);
 
         $raceDate = Carbon::parse($raceDate);
@@ -87,7 +91,7 @@ class ScraperCore implements ScraperCoreInterface
         foreach ($raceStadiumNumbers as $raceStadiumNumber) {
             foreach ($raceNumbers as $raceNumber) {
                 $response[$raceStadiumNumber][$raceNumber] = $this->callWithRetry(
-                    function() use ($scraper, $name, $raceDate, $raceStadiumNumber, $raceNumber) {
+                    function () use ($scraper, $name, $raceDate, $raceStadiumNumber, $raceNumber) {
                         if (preg_match('/^scrape([a-zA-Z]+)Odds$/u', $name, $matches)) {
                             return $scraper->{'scrape' . $matches[1]}(
                                 $raceDate,
@@ -163,7 +167,7 @@ class ScraperCore implements ScraperCoreInterface
      */
     private function getRaceStadiumNumbers(CarbonInterface $raceDate, string|int|null $raceStadiumNumber): array
     {
-        if (is_null($raceStadiumNumber)) {
+        if ($raceStadiumNumber === null) {
             return array_keys(
                 $this->getScraperInstance('scrapeStadiums')->scrape($raceDate)
             );
@@ -185,9 +189,9 @@ class ScraperCore implements ScraperCoreInterface
      *
      * @throws \InvalidArgumentException
      */
-    private function getRaceNumbers(string|int|null $raceNumber): array
+    private function getRaceNumbers(int|string|null $raceNumber): array
     {
-        if (is_null($raceNumber)) {
+        if ($raceNumber === null) {
             return range(1, 12);
         }
 
@@ -209,8 +213,11 @@ class ScraperCore implements ScraperCoreInterface
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
-    private function callWithRetry(callable $callback, int $maxRetries = 3, int $retryDelaySeconds = 3): mixed
-    {
+    private function callWithRetry(
+        callable $callback,
+        int $maxRetries = 3,
+        int $retryDelaySeconds = 3
+    ): mixed {
         $attempt = 0;
 
         while ($attempt < $maxRetries) {

@@ -24,8 +24,11 @@ class PreviewScraper extends BaseScraper implements PreviewScraperInterface
      * @param  int                      $raceNumber
      * @return array
      */
-    public function scrape(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
-    {
+    public function scrape(
+        CarbonInterface $raceDate,
+        int $raceStadiumNumber,
+        int $raceNumber
+    ): array {
         $response = [];
 
         $scraperFormat = '%s/owpc/pc/race/beforeinfo?hd=%s&jcd=%02d&rno=%d';
@@ -37,7 +40,7 @@ class PreviewScraper extends BaseScraper implements PreviewScraperInterface
         $levelXPath = sprintf($levelFormat, $this->baseXPath);
 
         $this->baseLevel = 0;
-        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+        if ($this->filterXPath($scraper, $levelXPath) !== null) {
             $this->baseLevel = 1;
         }
 
@@ -114,7 +117,7 @@ class PreviewScraper extends BaseScraper implements PreviewScraperInterface
             $racerBoatNumber = $this->filterXPath($scraper, $racerBoatNumberXPath);
             $racerStartTiming = $this->filterXPath($scraper, $racerStartTimingXPath);
 
-            if (is_null($racerBoatNumber)) {
+            if ($racerBoatNumber === null) {
                 continue;
             }
 
@@ -146,7 +149,7 @@ class PreviewScraper extends BaseScraper implements PreviewScraperInterface
             $racerExhibitionTime = $this->filterXPath($scraper, $racerExhibitionTimeXPath);
             $racerTiltAdjustment = $this->filterXPath($scraper, $racerTiltAdjustmentXPath);
 
-            if (is_null($racerBoatNumber)) {
+            if ($racerBoatNumber === null) {
                 continue;
             }
 

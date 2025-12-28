@@ -37,7 +37,7 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
         $levelXPath = sprintf($levelFormat, $this->baseXPath);
 
         $this->baseLevel = 0;
-        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+        if ($this->filterXPath($scraper, $levelXPath) !== null) {
             $this->baseLevel = 1;
         }
 
@@ -119,7 +119,7 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
             $racerBoatNumber = $this->filterXPath($scraper, $racerBoatNumberXPath);
             $racerStartTiming = $this->filterXPath($scraper, $racerStartTimingXPath);
 
-            if (is_null($racerBoatNumber)) {
+            if ($racerBoatNumber === null) {
                 continue;
             }
 
@@ -148,7 +148,7 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
             $racerNumber = $this->filterXPath($scraper, $racerNumberXPath);
             $racerName = $this->filterXPath($scraper, $racerNameXPath);
 
-            if (is_null($racerBoatNumber)) {
+            if ($racerBoatNumber === null) {
                 continue;
             }
 

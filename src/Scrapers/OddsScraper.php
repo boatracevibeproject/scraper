@@ -23,8 +23,11 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
      * @param  int                      $raceNumber
      * @return array
      */
-    public function scrape(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
-    {
+    public function scrape(
+        CarbonInterface $raceDate,
+        int $raceStadiumNumber,
+        int $raceNumber
+    ): array {
         $response = [];
 
         $response += $this->scrapeWin($raceDate, $raceStadiumNumber, $raceNumber);
@@ -44,8 +47,11 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
      * @param  int                      $raceNumber
      * @return array
      */
-    public function scrapeWin(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
-    {
+    public function scrapeWin(
+        CarbonInterface $raceDate,
+        int $raceStadiumNumber,
+        int $raceNumber,
+    ): array {
         $response = [];
 
         $response['race_date'] = $raceDate->format('Y-m-d');
@@ -61,7 +67,7 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
         $levelXPath = sprintf($levelFormat, $this->baseXPath);
 
         $this->baseLevel = 0;
-        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+        if ($this->filterXPath($scraper, $levelXPath) !== null) {
             $this->baseLevel = 1;
         }
 
@@ -88,8 +94,11 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
      * @param  int                      $raceNumber
      * @return array
      */
-    public function scrapePlace(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
-    {
+    public function scrapePlace(
+        CarbonInterface $raceDate,
+        int $raceStadiumNumber,
+        int $raceNumber
+    ): array {
         $response = [];
 
         $response['race_date'] = $raceDate->format('Y-m-d');
@@ -105,7 +114,7 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
         $levelXPath = sprintf($levelFormat, $this->baseXPath);
 
         $this->baseLevel = 0;
-        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+        if ($this->filterXPath($scraper, $levelXPath) !== null) {
             $this->baseLevel = 1;
         }
 
@@ -132,8 +141,11 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
      * @param  int                      $raceNumber
      * @return array
      */
-    public function scrapeExacta(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
-    {
+    public function scrapeExacta(
+        CarbonInterface $raceDate,
+        int $raceStadiumNumber,
+        int $raceNumber
+    ): array {
         $response = [];
 
         $response['race_date'] = $raceDate->format('Y-m-d');
@@ -149,7 +161,7 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
         $levelXPath = sprintf($levelFormat, $this->baseXPath);
 
         $this->baseLevel = 0;
-        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+        if ($this->filterXPath($scraper, $levelXPath) !== null) {
             $this->baseLevel = 1;
         }
 
@@ -224,8 +236,11 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
      * @param  int                      $raceNumber
      * @return array
      */
-    public function scrapeQuinella(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
-    {
+    public function scrapeQuinella(
+        CarbonInterface $raceDate,
+        int $raceStadiumNumber,
+        int $raceNumber
+    ): array {
         $response = [];
 
         $response['race_date'] = $raceDate->format('Y-m-d');
@@ -241,7 +256,7 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
         $levelXPath = sprintf($levelFormat, $this->baseXPath);
 
         $this->baseLevel = 0;
-        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+        if ($this->filterXPath($scraper, $levelXPath) !== null) {
             $this->baseLevel = 1;
         }
 
@@ -286,8 +301,11 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
      * @param  int                      $raceNumber
      * @return array
      */
-    public function scrapeQuinellaPlace(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
-    {
+    public function scrapeQuinellaPlace(
+        CarbonInterface $raceDate,
+        int $raceStadiumNumber,
+        int $raceNumber
+    ): array {
         $response = [];
 
         $response['race_date'] = $raceDate->format('Y-m-d');
@@ -303,7 +321,7 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
         $levelXPath = sprintf($levelFormat, $this->baseXPath);
 
         $this->baseLevel = 0;
-        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+        if ($this->filterXPath($scraper, $levelXPath) !== null) {
             $this->baseLevel = 1;
         }
 
@@ -348,8 +366,11 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
      * @param  int                      $raceNumber
      * @return array
      */
-    public function scrapeTrifecta(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
-    {
+    public function scrapeTrifecta(
+        CarbonInterface $raceDate,
+        int $raceStadiumNumber,
+        int $raceNumber
+    ): array {
         $response = [];
 
         $response['race_date'] = $raceDate->format('Y-m-d');
@@ -365,7 +386,7 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
         $levelXPath = sprintf($levelFormat, $this->baseXPath);
 
         $this->baseLevel = 0;
-        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+        if ($this->filterXPath($scraper, $levelXPath) !== null) {
             $this->baseLevel = 1;
         }
 
@@ -620,8 +641,11 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
      * @param  int                      $raceNumber
      * @return array
      */
-    public function scrapeTrio(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
-    {
+    public function scrapeTrio(
+        CarbonInterface $raceDate,
+        int $raceStadiumNumber,
+        int $raceNumber
+    ): array {
         $response = [];
 
         $response['race_date'] = $raceDate->format('Y-m-d');
@@ -637,7 +661,7 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
         $levelXPath = sprintf($levelFormat, $this->baseXPath);
 
         $this->baseLevel = 0;
-        if (!is_null($this->filterXPath($scraper, $levelXPath))) {
+        if ($this->filterXPath($scraper, $levelXPath) !== null) {
             $this->baseLevel = 1;
         }
 

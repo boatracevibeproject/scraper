@@ -9,4 +9,7 @@ use BVP\Scraper\ScraperContractInterface;
 /**
  * @author shimomo
  */
-interface BaseScraperInterface extends ScraperContractInterface {}
+interface BaseScraperInterface extends ScraperContractInterface
+{
+    //
+}
