@@ -10,18 +10,27 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\BrowserKit\HttpBrowser;
 
 /**
+ * @psalm-import-type RaceArguments from \BVP\Scraper\Tests\ScraperPsalmType
+ * @psalm-import-type RaceExpected from \BVP\Scraper\Tests\ScraperPsalmType
+ *
  * @author shimomo
  */
 final class ResultScraperTest extends TestCase
 {
     /**
+     * @psalm-suppress PropertyNotSetInConstructor
+     * @psalm-var \BVP\Scraper\Scrapers\ResultScraper
+     *
      * @var \BVP\Scraper\Scrapers\ResultScraper
      */
     protected ResultScraper $scraper;
 
     /**
+     * @psalm-return void
+     *
      * @return void
      */
+    #[\Override]
     protected function setUp(): void
     {
         $this->scraper = new ResultScraper(
@@ -30,8 +39,12 @@ final class ResultScraperTest extends TestCase
     }
 
     /**
-     * @param  array  $arguments
-     * @param  array  $expected
+     * @psalm-param RaceArguments $arguments
+     * @psalm-param RaceExpected $expected
+     * @psalm-return void
+     *
+     * @param array $arguments
+     * @param array $expected
      * @return void
      */
     #[DataProviderExternal(ResultScraperDataProvider::class, 'scrapeProvider')]

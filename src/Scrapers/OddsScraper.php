@@ -5,24 +5,31 @@ declare(strict_types=1);
 namespace BVP\Scraper\Scrapers;
 
 use Carbon\CarbonInterface;
-use Symfony\Component\DomCrawler\Crawler;
 
 /**
  * @author shimomo
  */
-class OddsScraper extends BaseScraper implements OddsScraperInterface
+final class OddsScraper extends BaseScraper implements OddsScraperInterface
 {
     /**
+     * @psalm-var non-empty-string
+     *
      * @var string
      */
     private string $baseXPath = 'descendant-or-self::body/main/div/div/div';
 
     /**
-     * @param  \Carbon\CarbonInterface  $raceDate
-     * @param  int                      $raceStadiumNumber
-     * @param  int                      $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $raceDate
+     * @psalm-param int<1, 24> $raceStadiumNumber
+     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param \Carbon\CarbonInterface $raceDate
+     * @param int $raceStadiumNumber
+     * @param int $raceNumber
      * @return array
      */
+    #[\Override]
     public function scrape(
         CarbonInterface $raceDate,
         int $raceStadiumNumber,
@@ -42,11 +49,17 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @param  \Carbon\CarbonInterface  $raceDate
-     * @param  int                      $raceStadiumNumber
-     * @param  int                      $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $raceDate
+     * @psalm-param int<1, 24> $raceStadiumNumber
+     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param \Carbon\CarbonInterface $raceDate
+     * @param int $raceStadiumNumber
+     * @param int $raceNumber
      * @return array
      */
+    #[\Override]
     public function scrapeWin(
         CarbonInterface $raceDate,
         int $raceStadiumNumber,
@@ -89,11 +102,17 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @param  \Carbon\CarbonInterface  $raceDate
-     * @param  int                      $raceStadiumNumber
-     * @param  int                      $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $raceDate
+     * @psalm-param int<1, 24> $raceStadiumNumber
+     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param \Carbon\CarbonInterface $raceDate
+     * @param int $raceStadiumNumber
+     * @param int $raceNumber
      * @return array
      */
+    #[\Override]
     public function scrapePlace(
         CarbonInterface $raceDate,
         int $raceStadiumNumber,
@@ -136,11 +155,17 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @param  \Carbon\CarbonInterface  $raceDate
-     * @param  int                      $raceStadiumNumber
-     * @param  int                      $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $raceDate
+     * @psalm-param int<1, 24> $raceStadiumNumber
+     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param \Carbon\CarbonInterface $raceDate
+     * @param int $raceStadiumNumber
+     * @param int $raceNumber
      * @return array
      */
+    #[\Override]
     public function scrapeExacta(
         CarbonInterface $raceDate,
         int $raceStadiumNumber,
@@ -231,11 +256,17 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @param  \Carbon\CarbonInterface  $raceDate
-     * @param  int                      $raceStadiumNumber
-     * @param  int                      $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $raceDate
+     * @psalm-param int<1, 24> $raceStadiumNumber
+     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param \Carbon\CarbonInterface $raceDate
+     * @param int $raceStadiumNumber
+     * @param int $raceNumber
      * @return array
      */
+    #[\Override]
     public function scrapeQuinella(
         CarbonInterface $raceDate,
         int $raceStadiumNumber,
@@ -296,11 +327,17 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @param  \Carbon\CarbonInterface  $raceDate
-     * @param  int                      $raceStadiumNumber
-     * @param  int                      $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $raceDate
+     * @psalm-param int<1, 24> $raceStadiumNumber
+     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param \Carbon\CarbonInterface $raceDate
+     * @param int $raceStadiumNumber
+     * @param int $raceNumber
      * @return array
      */
+    #[\Override]
     public function scrapeQuinellaPlace(
         CarbonInterface $raceDate,
         int $raceStadiumNumber,
@@ -361,11 +398,17 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @param  \Carbon\CarbonInterface  $raceDate
-     * @param  int                      $raceStadiumNumber
-     * @param  int                      $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $raceDate
+     * @psalm-param int<1, 24> $raceStadiumNumber
+     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param \Carbon\CarbonInterface $raceDate
+     * @param int $raceStadiumNumber
+     * @param int $raceNumber
      * @return array
      */
+    #[\Override]
     public function scrapeTrifecta(
         CarbonInterface $raceDate,
         int $raceStadiumNumber,
@@ -636,11 +679,17 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @param  \Carbon\CarbonInterface  $raceDate
-     * @param  int                      $raceStadiumNumber
-     * @param  int                      $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $raceDate
+     * @psalm-param int<1, 24> $raceStadiumNumber
+     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param \Carbon\CarbonInterface $raceDate
+     * @param int $raceStadiumNumber
+     * @param int $raceNumber
      * @return array
      */
+    #[\Override]
     public function scrapeTrio(
         CarbonInterface $raceDate,
         int $raceStadiumNumber,

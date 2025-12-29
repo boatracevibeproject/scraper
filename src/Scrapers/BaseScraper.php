@@ -13,38 +13,49 @@ use Symfony\Component\DomCrawler\Crawler;
 /**
  * @author shimomo
  */
-abstract class BaseScraper
+abstract class BaseScraper implements BaseScraperInterface
 {
     use HttpBrowserInitializer;
 
     /**
+     * @psalm-var non-empty-string
+     *
      * @var string
      */
     protected string $baseUrl = 'https://www.boatrace.jp';
 
     /**
+     * @psalm-var int<0, 1>
+     *
      * @var int
      */
     protected int $baseLevel = 0;
 
     /**
+     * @psalm-var int<0, max>
+     *
      * @var int
      */
     protected int $seconds = 1;
 
     /**
-     * @param  \Symfony\Component\BrowserKit\HttpBrowser  $httpBrowser
-     * @return void
+     * @psalm-param \Symfony\Component\BrowserKit\HttpBrowser $httpBrowser
+     *
+     * @param \Symfony\Component\BrowserKit\HttpBrowser $httpBrowser
      */
-    public function __construct(protected readonly HttpBrowser $httpBrowser)
+    final public function __construct(protected readonly HttpBrowser $httpBrowser)
     {
         $this->initializeHttpBrowser($httpBrowser);
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  string                                 $xpath
-     * @return string|null
+     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @psalm-param string $xpath
+     * @psalm-return ?string
+     *
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @param string $xpath
+     * @return ?string
      */
     protected function filterXPath(Crawler $scraper, string $xpath): ?string
     {
@@ -59,6 +70,10 @@ abstract class BaseScraper
     }
 
     /**
+     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @psalm-param string $xpath
+     * @psalm-return ?string
+     *
      * @param \Symfony\Component\DomCrawler\Crawler $scraper
      * @param string $xpath
      * @return ?string
@@ -73,6 +88,10 @@ abstract class BaseScraper
         $value = Converter::convertToString($value);
         $value = Trimmer::trim($value);
 
+        if ($value === null) {
+            return null;
+        }
+
         if (preg_match('/is-([a-zA-Z0-9]+)/', $value, $matches)) {
             if ($matches[1] === 'ippan') {
                 return '一般';
@@ -85,9 +104,13 @@ abstract class BaseScraper
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  string                                 $xpath
-     * @return int|null
+     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @psalm-param string $xpath
+     * @psalm-return ?int
+     *
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @param string $xpath
+     * @return ?int
      */
     protected function filterXPathForGradeNumber(Crawler $scraper, string $xpath): ?int
     {
@@ -98,6 +121,10 @@ abstract class BaseScraper
         $value = $scraper->filterXPath($xpath)->attr('class');
         $value = Converter::convertToString($value);
         $value = Trimmer::trim($value);
+
+        if ($value === null) {
+            return null;
+        }
 
         if (preg_match('/is-([a-zA-Z0-9]+)/', $value, $matches)) {
             if ($matches[1] === 'ippan') {
@@ -116,9 +143,13 @@ abstract class BaseScraper
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  string                                 $xpath
-     * @return string
+     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @psalm-param string $xpath
+     * @psalm-return ?string
+     *
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @param string $xpath
+     * @return ?string
      */
     protected function filterXPathForWindDirectionNumber(Crawler $scraper, string $xpath): ?string
     {
@@ -133,9 +164,13 @@ abstract class BaseScraper
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  string                                 $xpath
-     * @return float|null
+     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @psalm-param string $xpath
+     * @psalm-return ?float
+     *
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @param string $xpath
+     * @return ?float
      */
     protected function filterXPathForOdds(Crawler $scraper, string $xpath): ?float
     {
@@ -149,23 +184,27 @@ abstract class BaseScraper
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  string                                 $xpath
+     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @psalm-param string $xpath
+     * @psalm-return array{
+     *     lower_limit: ?float,
+     *     upper_limit: ?float,
+     * }
+     *
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @param string $xpath
      * @return array
      */
     protected function filterXPathForOddsWithLowerLimitAndUpperLimit(Crawler $scraper, string $xpath): array
     {
+        $response = ['lower_limit' => null, 'upper_limit' => null];
+
         if ($scraper->filterXPath($xpath)->count()) {
             if (count($oddses = explode('-', $scraper->filterXPath($xpath)->text())) === 2) {
-                $lowerLimit = Converter::convertToFloat(array_shift($oddses));
-                $upperLimit = Converter::convertToFloat(array_shift($oddses));
+                $response['lower_limit'] = Converter::convertToFloat(array_shift($oddses));
+                $response['upper_limit'] = Converter::convertToFloat(array_shift($oddses));
             }
         }
-
-        $response = [];
-
-        $response['lower_limit'] = $lowerLimit ?? null;
-        $response['upper_limit'] = $upperLimit ?? null;
 
         return $response;
     }

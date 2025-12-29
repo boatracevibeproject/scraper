@@ -1,0 +1,10 @@
+<?php
+
+namespace BVP\Trimmer;
+
+/**
+ * @psalm-method static ?string trim(?string $items, ?string $characters = null, ?string $encoding = null)
+ * @psalm-method static ?string ltrim(?string $items, ?string $characters = null, ?string $encoding = null)
+ * @psalm-method static ?string rtrim(?string $items, ?string $characters = null, ?string $encoding = null)
+ */
+final class Trimmer {}

@@ -7,11 +7,21 @@ namespace BVP\Scraper\Tests\Scrapers;
 use Carbon\CarbonImmutable as Carbon;
 
 /**
+ * @psalm-import-type RaceDate from \BVP\Scraper\Tests\ScraperPsalmType
+ * @psalm-import-type RaceStadiumNumber from \BVP\Scraper\Tests\ScraperPsalmType
+ *
  * @author shimomo
  */
 final class StadiumScraperDataProvider
 {
     /**
+     * @psalm-return non-empty-list<
+     *     array{
+     *         arguments: array{RaceDate},
+     *         expected: array<RaceStadiumNumber, non-empty-string>,
+     *     }
+     * >
+     *
      * @return array
      */
     public static function scrapeStadiumsProvider(): array

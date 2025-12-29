@@ -11,21 +11,33 @@ use BVP\Scraper\Scrapers\PreviewScraper;
 use BVP\Scraper\Scrapers\ProgramScraper;
 use BVP\Scraper\Scrapers\ResultScraper;
 use BVP\Scraper\Scrapers\StadiumScraper;
+use BVP\Scraper\Scrapers\StadiumScraperInterface;
 use Carbon\CarbonImmutable as Carbon;
 use Carbon\CarbonInterface;
 use Symfony\Component\BrowserKit\HttpBrowser;
 
 /**
+ * @psalm-import-type ScraperArguments from \BVP\Scraper\Scraper
+ * @psalm-method array<array-key, mixed> scrapePrograms(mixed ...$arguments)
+ * @psalm-method array<array-key, mixed> scrapePreviews(mixed ...$arguments)
+ * @psalm-method array<array-key, mixed> scrapeOdds(mixed ...$arguments)
+ * @psalm-method array<array-key, mixed> scrapeResults(mixed ...$arguments)
+ * @psalm-method array<array-key, mixed> scrapeStadiums(mixed ...$arguments)
+ *
  * @author shimomo
  */
-class ScraperCore implements ScraperCoreInterface
+final class ScraperCore implements ScraperCoreInterface
 {
     /**
+     * @psalm-var array<non-empty-string, \BVP\Scraper\Scrapers\BaseScraperInterface>
+     *
      * @var array
      */
     private array $instances = [];
 
     /**
+     * @psalm-var non-empty-array<non-empty-string, class-string<\BVP\Scraper\Scrapers\BaseScraperInterface>>
+     *
      * @var array
      */
     private array $scraperClasses = [
@@ -44,45 +56,55 @@ class ScraperCore implements ScraperCoreInterface
     ];
 
     /**
-     * @param  string  $name
-     * @param  array   $arguments
-     * @return array
+     * @psalm-param non-empty-string $name
+     * @psalm-param ScraperArguments $arguments
+     * @psalm-return array<array-key, mixed>
      *
+     * @param string $name
+     * @param array $arguments
+     * @return array
      * @throws \InvalidArgumentException
      */
     public function __call(string $name, array $arguments): array
     {
-        $countArguments = count($arguments);
-        if ($countArguments >= 4) {
-            throw new \InvalidArgumentException(
-                __METHOD__ . "() - Too many arguments to function " . self::class . "::{$name}(), " .
-                "{$countArguments} passed and exactly 1-3 expected."
-            );
-        }
+        $arguments = array_slice($arguments, 0, 3);
 
+        /**
+         * @psalm-var array{
+         *   0?: CarbonInterface|string|null,
+         *   1?: int<1,24>|string|null,
+         *   2?: int<1,12>|string|null,
+         * } $arguments
+         */
         return $this->scraper($name, ...$arguments);
     }
 
     /**
-     * @param  string                          $name
-     * @param  \Carbon\CarbonInterface|string  $raceDate
-     * @param  string|int|null                 $raceStadiumNumber
-     * @param  string|int|null                 $raceNumber
+     * @psalm-param non-empty-string $name
+     * @psalm-param \Carbon\CarbonInterface|string $raceDate
+     * @psalm-param int<1, 24>|string|null $raceStadiumNumber
+     * @psalm-param int<1, 12>|string|null $raceNumber
+     * @psalm-return array<array-key, mixed>
+     *
+     * @param string $name
+     * @param \Carbon\CarbonInterface|string $raceDate
+     * @param int|string|null $raceStadiumNumber
+     * @param int|string|null $raceNumber
      * @return array
      */
     private function scraper(
         string $name,
-        CarbonInterface|string $raceDate,
+        CarbonInterface|string|null $raceDate = null,
         int|string|null $raceStadiumNumber = null,
         int|string|null $raceNumber = null
     ): array {
-        $scraper = $this->getScraperInstance($name);
-
-        $raceDate = Carbon::parse($raceDate);
+        $raceDate = Carbon::parse($raceDate ?? 'today');
 
         if ($name === 'scrapeStadiums') {
-            return $scraper->scrape($raceDate);
+            return $this->getStadiumScraper()->scrape($raceDate);
         }
+
+        $scraper = $this->getScraperInstance($name);
 
         $raceStadiumNumbers = $this->getRaceStadiumNumbers($raceDate, $raceStadiumNumber);
         $raceNumbers = $this->getRaceNumbers($raceNumber);
@@ -90,23 +112,21 @@ class ScraperCore implements ScraperCoreInterface
         $response = [];
         foreach ($raceStadiumNumbers as $raceStadiumNumber) {
             foreach ($raceNumbers as $raceNumber) {
-                $response[$raceStadiumNumber][$raceNumber] = $this->callWithRetry(
-                    function () use ($scraper, $name, $raceDate, $raceStadiumNumber, $raceNumber) {
-                        if (preg_match('/^scrape([a-zA-Z]+)Odds$/u', $name, $matches)) {
-                            return $scraper->{'scrape' . $matches[1]}(
-                                $raceDate,
-                                $raceStadiumNumber,
-                                $raceNumber
-                            );
-                        } else {
-                            return $scraper->scrape(
-                                $raceDate,
-                                $raceStadiumNumber,
-                                $raceNumber
-                            );
+                if (method_exists($scraper, 'scrape')) {
+                    $response[$raceStadiumNumber][$raceNumber] = $this->callWithRetry(
+                        function () use ($scraper, $raceDate, $raceStadiumNumber, $raceNumber): array {
+                            /** @psalm-var array<non-empty-string, mixed> */
+                            return $scraper->scrape($raceDate, $raceStadiumNumber, $raceNumber);
                         }
-                    }
-                );
+                    );
+                } elseif (preg_match('/^scrape([a-zA-Z]+)Odds$/u', $name, $matches)) {
+                    $response[$raceStadiumNumber][$raceNumber] = $this->callWithRetry(
+                        function () use ($scraper, $matches, $raceDate, $raceStadiumNumber, $raceNumber): array {
+                            /** @psalm-var array<non-empty-string, mixed> */
+                            return $scraper->{'scrape' . $matches[1]}($raceDate, $raceStadiumNumber, $raceNumber);
+                        }
+                    );
+                }
             }
         }
 
@@ -114,9 +134,11 @@ class ScraperCore implements ScraperCoreInterface
     }
 
     /**
-     * @param  string  $name
-     * @return string
+     * @psalm-param string $name
+     * @psalm-return class-string<\BVP\Scraper\Scrapers\BaseScraperInterface>
      *
+     * @param string $name
+     * @return string
      * @throws \BadMethodCallException
      */
     private function resolveScraperClass(string $name): string
@@ -126,31 +148,34 @@ class ScraperCore implements ScraperCoreInterface
         }
 
         throw new \BadMethodCallException(
-            __METHOD__ . "() - The scraper name for '{$name}' is invalid."
+            __METHOD__ . "() - Scraper name for `{$name}` is invalid."
         );
     }
 
     /**
-     * @param  string  $name
-     * @return \BVP\Scraper\ScraperContractInterface
+     * @psalm-param non-empty-string $name
+     * @psalm-return \BVP\Scraper\Scrapers\BaseScraperInterface
+     *
+     * @param string $name
+     * @return \BVP\Scraper\Scrapers\BaseScraperInterface
      */
-    private function getScraperInstance(string $name): ScraperContractInterface
+    private function getScraperInstance(string $name): BaseScraperInterface
     {
         if (isset($this->instances[$name])) {
             return $this->instances[$name];
         }
 
-        $scraper = $this->resolveScraperClass($name);
-        return $this->instances[$name] = new $scraper(
-            new HttpBrowser()
-        );
+        return $this->createScraperInstance($name);
     }
 
     /**
-     * @param  string  $name
-     * @return \BVP\Scraper\ScraperContractInterface
+     * @psalm-param non-empty-string $name
+     * @psalm-return \BVP\Scraper\Scrapers\BaseScraperInterface
+     *
+     * @param string $name
+     * @return \BVP\Scraper\Scrapers\BaseScraperInterface
      */
-    private function createScraperInstance(string $name): ScraperContractInterface
+    private function createScraperInstance(string $name): BaseScraperInterface
     {
         $scraper = $this->resolveScraperClass($name);
         return $this->instances[$name] = new $scraper(
@@ -159,56 +184,124 @@ class ScraperCore implements ScraperCoreInterface
     }
 
     /**
-     * @param  \Carbon\CarbonInterface  $raceDate
-     * @param  string|int|null          $raceStadiumNumber
-     * @return array
+     * @psalm-return \BVP\Scraper\Scrapers\StadiumScraperInterface
      *
+     * @return \BVP\Scraper\Scrapers\StadiumScraperInterface
+     * @throws \LogicException
+     */
+    private function getStadiumScraper(): StadiumScraperInterface
+    {
+        $stadiumScraper = $this->getScraperInstance('scrapeStadiums');
+        if ($stadiumScraper instanceof StadiumScraperInterface) {
+            return $stadiumScraper;
+        }
+
+        $stadiumScraperClassName = get_class($stadiumScraper);
+
+        throw new \LogicException(
+            __METHOD__ . "() - Stadium scraper instance for `{$stadiumScraperClassName}` is invalid."
+        );
+    }
+
+    /**
+     * @psalm-param \Carbon\CarbonInterface $raceDate
+     * @psalm-param int|string|null $raceStadiumNumber
+     * @psalm-return non-empty-list<int<1, 24>>
+     *
+     * @param \Carbon\CarbonInterface $raceDate
+     * @param int|string|null $raceStadiumNumber
+     * @return array
      * @throws \InvalidArgumentException
      */
-    private function getRaceStadiumNumbers(CarbonInterface $raceDate, string|int|null $raceStadiumNumber): array
+    private function getRaceStadiumNumbers(CarbonInterface $raceDate, int|string|null $raceStadiumNumber): array
     {
         if ($raceStadiumNumber === null) {
-            return array_keys(
-                $this->getScraperInstance('scrapeStadiums')->scrape($raceDate)
-            );
+            $raceStadiumNumbers = array_keys($this->getStadiumScraper()->scrape($raceDate));
+
+            if (!count($raceStadiumNumbers)) {
+                /** @psalm-var non-empty-list<int<1, 24>> */
+                return range(1, 24);
+            }
+
+            return $raceStadiumNumbers;
         }
 
         $formattedRaceStadiumNumber = Converter::convertToString($raceStadiumNumber);
+        if ($formattedRaceStadiumNumber === null) {
+            $raceStadiumNumbers = array_keys($this->getStadiumScraper()->scrape($raceDate));
+
+            if (!count($raceStadiumNumbers)) {
+                /** @psalm-var non-empty-list<int<1, 24>> */
+                return range(1, 24);
+            }
+
+            return $raceStadiumNumbers;
+        }
+
         if (preg_match('/\b(0?[1-9]|1[0-9]|2[0-4])\b/', $formattedRaceStadiumNumber, $matches)) {
-            return [(int) $matches[1]];
+            $raceStadiumNumber = (int) $matches[1];
+
+            if ($raceStadiumNumber <= 0 || $raceStadiumNumber >= 25) {
+                throw new \InvalidArgumentException(
+                    __METHOD__ . "() - Race Stadium number for `{$raceStadiumNumber}` is invalid."
+                );
+            }
+
+            return [$raceStadiumNumber];
         }
 
         throw new \InvalidArgumentException(
-            __METHOD__ . "() - The race stadium number for '{$raceStadiumNumber}' is invalid."
+            __METHOD__ . "() - Race stadium number for `{$raceStadiumNumber}` is invalid."
         );
     }
 
     /**
-     * @param  string|int|null  $raceNumber
-     * @return array
+     * @psalm-param int|string|null $raceNumber
+     * @psalm-return non-empty-list<int<1, 12>>
      *
+     * @param int|string|null $raceNumber
+     * @return array
      * @throws \InvalidArgumentException
      */
     private function getRaceNumbers(int|string|null $raceNumber): array
     {
         if ($raceNumber === null) {
+            /** @psalm-var non-empty-list<int<1, 12>> */
             return range(1, 12);
         }
 
         $formattedRaceNumber = Converter::convertToString($raceNumber);
+        if ($formattedRaceNumber === null) {
+            /** @psalm-var non-empty-list<int<1, 12>> */
+            return range(1, 12);
+        }
+
         if (preg_match('/\b(0?[1-9]|1[0-2])\b/', $formattedRaceNumber, $matches)) {
-            return [(int) $matches[1]];
+            $raceNumber = (int) $matches[1];
+
+            if ($raceNumber <= 0 || $raceNumber >= 13) {
+                throw new \InvalidArgumentException(
+                    __METHOD__ . "() - Race number for `{$raceNumber}` is invalid."
+                );
+            }
+
+            return [$raceNumber];
         }
 
         throw new \InvalidArgumentException(
-            __METHOD__ . "() - The race number for '{$raceNumber}' is invalid."
+            __METHOD__ . "() - Race number for `{$raceNumber}` is invalid."
         );
     }
 
     /**
-     * @param  callable  $callback
-     * @param  int       $maxRetries
-     * @param  int       $retryDelaySeconds
+     * @psalm-param callable $callback
+     * @psalm-param int<0, max> $maxRetries
+     * @psalm-param int<0, max> $retryDelaySeconds
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param callable $callback
+     * @param int $maxRetries
+     * @param int $retryDelaySeconds
      * @return mixed
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
@@ -222,7 +315,9 @@ class ScraperCore implements ScraperCoreInterface
 
         while ($attempt < $maxRetries) {
             $attempt++;
+
             try {
+                /** @psalm-var array<non-empty-string, mixed> */
                 return $callback();
             } catch (\RuntimeException $exception) {
                 if ($attempt >= $maxRetries) {
@@ -234,7 +329,7 @@ class ScraperCore implements ScraperCoreInterface
         }
 
         throw new \InvalidArgumentException(
-            __METHOD__ . "() - Invalid retry count."
+            __METHOD__ . "() - Retry count `{$maxRetries}` is invalid."
         );
     }
 }

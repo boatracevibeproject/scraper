@@ -13,7 +13,10 @@ use Carbon\CarbonInterface;
 interface StadiumScraperInterface extends ScraperContractInterface
 {
     /**
-     * @param  \Carbon\CarbonInterface  $raceDate
+     * @psalm-param \Carbon\CarbonInterface $raceDate
+     * @psalm-return array<int<1, 24>, non-empty-string>
+     *
+     * @param \Carbon\CarbonInterface $raceDate
      * @return array
      */
     public function scrape(CarbonInterface $raceDate): array;

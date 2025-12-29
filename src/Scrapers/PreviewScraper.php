@@ -11,19 +11,27 @@ use Symfony\Component\DomCrawler\Crawler;
 /**
  * @author shimomo
  */
-class PreviewScraper extends BaseScraper implements PreviewScraperInterface
+final class PreviewScraper extends BaseScraper implements PreviewScraperInterface
 {
     /**
+     * @psalm-var non-empty-string
+     *
      * @var string
      */
     private string $baseXPath = 'descendant-or-self::body/main/div/div/div';
 
     /**
-     * @param  \Carbon\CarbonInterface  $raceDate
-     * @param  int                      $raceStadiumNumber
-     * @param  int                      $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $raceDate
+     * @psalm-param int<1, 24> $raceStadiumNumber
+     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param \Carbon\CarbonInterface $raceDate
+     * @param int $raceStadiumNumber
+     * @param int $raceNumber
      * @return array
      */
+    #[\Override]
     public function scrape(
         CarbonInterface $raceDate,
         int $raceStadiumNumber,
@@ -82,18 +90,19 @@ class PreviewScraper extends BaseScraper implements PreviewScraperInterface
         $response['race_temperature'] = $raceTemperature;
         $response['race_water_temperature'] = $raceWaterTemperature;
 
-        $response += $this->scrapeBoats($scraper, $raceStadiumNumber, $raceNumber);
+        $response += $this->scrapeBoats($scraper);
 
         return $response;
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  int                                    $raceStadiumNumber
-     * @param  int                                    $raceNumber
+     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
      * @return array
      */
-    private function scrapeBoats(Crawler $scraper, int $raceStadiumNumber, int $raceNumber): array
+    private function scrapeBoats(Crawler $scraper): array
     {
         $response = [];
 
@@ -117,13 +126,13 @@ class PreviewScraper extends BaseScraper implements PreviewScraperInterface
             $racerBoatNumber = $this->filterXPath($scraper, $racerBoatNumberXPath);
             $racerStartTiming = $this->filterXPath($scraper, $racerStartTimingXPath);
 
-            if ($racerBoatNumber === null) {
-                continue;
-            }
-
             $racerCourseNumber = $courseNumber;
             $racerBoatNumber = Converter::convertToInt($racerBoatNumber);
             $racerStartTiming = Converter::parseStartTiming($racerStartTiming);
+
+            if ($racerBoatNumber === null) {
+                continue;
+            }
 
             $response['boats'][$racerBoatNumber]['racer_boat_number'] = $racerBoatNumber;
             $response['boats'][$racerBoatNumber]['racer_course_number'] = $racerCourseNumber;
@@ -149,15 +158,15 @@ class PreviewScraper extends BaseScraper implements PreviewScraperInterface
             $racerExhibitionTime = $this->filterXPath($scraper, $racerExhibitionTimeXPath);
             $racerTiltAdjustment = $this->filterXPath($scraper, $racerTiltAdjustmentXPath);
 
-            if ($racerBoatNumber === null) {
-                continue;
-            }
-
             $racerBoatNumber = Converter::convertToInt($racerBoatNumber);
             $racerWeight = Converter::convertToFloat($racerWeight);
             $racerWeightAdjustment = Converter::convertToFloat($racerWeightAdjustment);
             $racerExhibitionTime = Converter::convertToFloat($racerExhibitionTime);
             $racerTiltAdjustment = Converter::convertToFloat($racerTiltAdjustment);
+
+            if ($racerBoatNumber === null) {
+                continue;
+            }
 
             $response['boats'][$racerBoatNumber]['racer_boat_number'] = $racerBoatNumber;
             $response['boats'][$racerBoatNumber]['racer_weight'] = $racerWeight;

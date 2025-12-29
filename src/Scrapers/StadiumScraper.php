@@ -6,32 +6,53 @@ namespace BVP\Scraper\Scrapers;
 
 use BVP\Converter\Converter;
 use Carbon\CarbonInterface;
+use Symfony\Component\DomCrawler\Crawler;
 
 /**
  * @author shimomo
  */
-class StadiumScraper extends BaseScraper implements StadiumScraperInterface
+final class StadiumScraper extends BaseScraper implements StadiumScraperInterface
 {
     /**
-     * @param  \Carbon\CarbonInterface  $raceDate
+     * @psalm-param \Carbon\CarbonInterface $raceDate
+     * @psalm-return array<int<1, 24>, non-empty-string>
+     *
+     * @param \Carbon\CarbonInterface $raceDate
      * @return array
      */
+    #[\Override]
     public function scrape(CarbonInterface $raceDate): array
     {
-        $response = [];
-
         $scraperFormat = '%s/owpc/pc/race/index?hd=%s';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'));
         $scraper = $this->httpBrowser->request('GET', $scraperUrl);
-
-        $response = [];
         $scraper = $scraper->filter('.table1')->eq(0);
         $scraper = $scraper->filter('table tbody td.is-arrow1.is-fBold.is-fs15');
-        $scraper->each(function ($element) use (&$response) {
-            $stadiumName = str_replace('>', '', $element->filter('a')->filter('img')->attr('alt'));
+        $stadiums = $scraper->each(function (Crawler $element): array {
+            $stadiumName = $element->filter('a')->filter('img')->attr('alt');
+            if ($stadiumName === null || $stadiumName === '') {
+                return [];
+            }
+
+            $stadiumName = str_replace('>', '', $stadiumName);
+            if ($stadiumName === '') {
+                return [];
+            }
+
             $stadiumNumber = Converter::convertToStadiumNumber($stadiumName);
-            $response[$stadiumNumber] = $stadiumName;
+            if ($stadiumNumber === null) {
+                return [];
+            }
+
+            return [$stadiumNumber => $stadiumName];
         });
+
+        $response = [];
+        foreach ($stadiums as $stadium) {
+            foreach ($stadium as $number => $name) {
+                $response[$number] = $name;
+            }
+        }
 
         return $response;
     }

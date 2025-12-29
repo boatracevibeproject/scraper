@@ -10,18 +10,27 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\BrowserKit\HttpBrowser;
 
 /**
+ * @psalm-import-type RaceArguments from \BVP\Scraper\Tests\ScraperPsalmType
+ * @psalm-import-type RaceExpected from \BVP\Scraper\Tests\ScraperPsalmType
+ *
  * @author shimomo
  */
 final class OddsScraperTest extends TestCase
 {
     /**
+     * @psalm-suppress PropertyNotSetInConstructor
+     * @psalm-var \BVP\Scraper\Scrapers\OddsScraper
+     *
      * @var \BVP\Scraper\Scrapers\OddsScraper
      */
     protected OddsScraper $scraper;
 
     /**
+     * @psalm-return void
+     *
      * @return void
      */
+    #[\Override]
     protected function setUp(): void
     {
         $this->scraper = new OddsScraper(
@@ -30,8 +39,12 @@ final class OddsScraperTest extends TestCase
     }
 
     /**
-     * @param  array  $arguments
-     * @param  array  $expected
+     * @psalm-param RaceArguments $arguments
+     * @psalm-param RaceExpected $expected
+     * @psalm-return void
+     *
+     * @param array $arguments
+     * @param array $expected
      * @return void
      */
     #[DataProviderExternal(OddsScraperDataProvider::class, 'scrapeProvider')]

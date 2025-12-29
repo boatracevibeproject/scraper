@@ -11,19 +11,27 @@ use Symfony\Component\DomCrawler\Crawler;
 /**
  * @author shimomo
  */
-class ResultScraper extends BaseScraper implements ResultScraperInterface
+final class ResultScraper extends BaseScraper implements ResultScraperInterface
 {
     /**
+     * @psalm-var non-empty-string
+     *
      * @var string
      */
     private string $baseXPath = 'descendant-or-self::body/main/div/div/div';
 
     /**
-     * @param  \Carbon\CarbonInterface  $raceDate
-     * @param  int                      $raceStadiumNumber
-     * @param  int                      $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $raceDate
+     * @psalm-param int<1, 24> $raceStadiumNumber
+     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param \Carbon\CarbonInterface $raceDate
+     * @param int $raceStadiumNumber
+     * @param int $raceNumber
      * @return array
      */
+    #[\Override]
     public function scrape(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
     {
         $response = [];
@@ -84,19 +92,20 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
         $response['race_water_temperature'] = $raceWaterTemperature;
         $response['race_technique_number'] = $raceTechniqueNumber;
 
-        $response += $this->scrapeBoats($scraper, $raceStadiumNumber, $raceNumber);
+        $response += $this->scrapeBoats($scraper);
         $response += $this->scrapePayouts($scraper);
 
         return $response;
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  int                                    $raceStadiumNumber
-     * @param  int                                    $raceNumber
+     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
      * @return array
      */
-    private function scrapeBoats(Crawler $scraper, int $raceStadiumNumber, int $raceNumber): array
+    private function scrapeBoats(Crawler $scraper): array
     {
         $response = [];
 
@@ -119,13 +128,13 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
             $racerBoatNumber = $this->filterXPath($scraper, $racerBoatNumberXPath);
             $racerStartTiming = $this->filterXPath($scraper, $racerStartTimingXPath);
 
-            if ($racerBoatNumber === null) {
-                continue;
-            }
-
             $racerCourseNumber = $courseNumber;
             $racerBoatNumber = Converter::convertToInt($racerBoatNumber);
             $racerStartTiming = Converter::parseStartTiming($racerStartTiming);
+
+            if ($racerBoatNumber === null) {
+                continue;
+            }
 
             $response['boats'][$racerBoatNumber]['racer_boat_number'] = $racerBoatNumber;
             $response['boats'][$racerBoatNumber]['racer_course_number'] = $racerCourseNumber;
@@ -148,14 +157,14 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
             $racerNumber = $this->filterXPath($scraper, $racerNumberXPath);
             $racerName = $this->filterXPath($scraper, $racerNameXPath);
 
-            if ($racerBoatNumber === null) {
-                continue;
-            }
-
             $racerPlaceNumber = Converter::convertToPlaceNumber($racerPlaceName);
             $racerBoatNumber = Converter::convertToInt($racerBoatNumber);
             $racerNumber = Converter::convertToInt($racerNumber);
             $racerName = Converter::convertToName($racerName);
+
+            if ($racerBoatNumber === null) {
+                continue;
+            }
 
             $response['boats'][$racerBoatNumber]['racer_boat_number'] = $racerBoatNumber;
             $response['boats'][$racerBoatNumber]['racer_place_number'] = $racerPlaceNumber;
@@ -169,7 +178,20 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
+     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @psalm-return array{
+     *     payouts?: array{
+     *         trifecta?: list<array{combination: non-empty-string, payout: int<0, max>}>,
+     *         trio?: list<array{combination: non-empty-string, payout: int<0, max>}>,
+     *         exacta?: list<array{combination: non-empty-string, payout: int<0, max>}>,
+     *         quinella?: list<array{combination: non-empty-string, payout: int<0, max>}>,
+     *         quinella_place?: list<array{combination: non-empty-string, payout: int<0, max>}>,
+     *         win?: list<array{combination: non-empty-string, payout: int<0, max>}>,
+     *         place?: list<array{combination: non-empty-string, payout: int<0, max>}>,
+     *     }
+     * }
+     *
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
      * @return array
      */
     private function scrapePayouts(Crawler $scraper): array
@@ -185,7 +207,7 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
                     $response['payouts'][$type] = [];
                 }
 
-                if (!empty($combination) && !empty($scrapedPayouts[$type][$index])) {
+                if ($combination !== '' && $scrapedPayouts[$type][$index] !== null) {
                     $response['payouts'][$type][] = [
                         'combination' => $combination,
                         'payout' => $scrapedPayouts[$type][$index],
@@ -198,7 +220,18 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
+     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @psalm-return array{
+     *     trifecta: list<string>,
+     *     trio: list<string>,
+     *     exacta: list<string>,
+     *     quinella: list<string>,
+     *     quinella_place: list<string>,
+     *     win: list<string>,
+     *     place: list<string>,
+     * }
+     *
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
      * @return array
      */
     private function filterAllCombinations(Crawler $scraper): array
@@ -256,7 +289,18 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
+     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @psalm-return array{
+     *     trifecta: list<?int<0, max>>,
+     *     trio: list<?int<0, max>>,
+     *     exacta: list<?int<0, max>>,
+     *     quinella: list<?int<0, max>>,
+     *     quinella_place: list<?int<0, max>>,
+     *     win: list<?int<0, max>>,
+     *     place: list<?int<0, max>>,
+     * }
+     *
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
      * @return array
      */
     private function filterAllPayouts(Crawler $scraper): array
@@ -314,10 +358,16 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  array                                  $templates
-     * @param  int                                    $first
-     * @param  int                                    $last
+     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @psalm-param list<non-empty-string> $templates
+     * @psalm-param int<0, max> $first
+     * @psalm-param int<0, max> $last
+     * @psalm-return list<string>
+     *
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @param array $templates
+     * @param int $first
+     * @param int $last
      * @return array
      */
     private function filterCombinations(Crawler $scraper, array $templates, int $first, int $last): array
@@ -339,17 +389,21 @@ class ResultScraper extends BaseScraper implements ResultScraperInterface
     }
 
     /**
-     * @param  \Symfony\Component\DomCrawler\Crawler  $scraper
-     * @param  array                                  $templates
+     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @psalm-param list<non-empty-string> $templates
+     * @psalm-return list<?int<0, max>>
+     *
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @param array $templates
      * @return array
      */
-    private function filterPayouts($scraper, array $templates): array
+    private function filterPayouts(Crawler $scraper, array $templates): array
     {
-        return array_map(function ($template) use ($scraper) {
+        return array_map(function (string $template) use ($scraper) {
             $value = $this->filterXPath($scraper, sprintf($template, $this->baseXPath));
-            $value = str_replace('¥', '', $value ?? '');
-            $value = str_replace(',', '', $value ?? '');
-            return Converter::convertToInt($value);
+            $value = str_replace(',', '', str_replace('¥', '', $value ?? ''));
+            $value = Converter::convertToInt($value);
+            return $value >= 0 ? $value : null;
         }, $templates);
     }
 }

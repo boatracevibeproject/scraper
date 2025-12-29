@@ -7,11 +7,21 @@ namespace BVP\Scraper\Tests\Scrapers;
 use Carbon\CarbonImmutable as Carbon;
 
 /**
+ * @psalm-import-type RaceArguments from \BVP\Scraper\Tests\ScraperPsalmType
+ * @psalm-import-type RaceExpected from \BVP\Scraper\Tests\ScraperPsalmType
+ *
  * @author shimomo
  */
 final class OddsScraperDataProvider
 {
     /**
+     * @psalm-return non-empty-list<
+     *     array{
+     *         arguments: RaceArguments,
+     *         expected: RaceExpected,
+     *     }
+     * >
+     *
      * @return array
      */
     public static function scrapeProvider(): array

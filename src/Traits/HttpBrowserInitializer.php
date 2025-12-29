@@ -12,7 +12,10 @@ use Symfony\Component\BrowserKit\HttpBrowser;
 trait HttpBrowserInitializer
 {
     /**
-     * @param  \Symfony\Component\BrowserKit\HttpBrowser  $httpBrowser
+     * @psalm-param \Symfony\Component\BrowserKit\HttpBrowser $httpBrowser
+     * @psalm-return void
+     *
+     * @param \Symfony\Component\BrowserKit\HttpBrowser $httpBrowser
      * @return void
      */
     private function initializeHttpBrowser(HttpBrowser $httpBrowser): void

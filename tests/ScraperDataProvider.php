@@ -7,11 +7,23 @@ namespace BVP\Scraper\Tests;
 use Carbon\CarbonImmutable as Carbon;
 
 /**
+ * @psalm-import-type RaceDate from \BVP\Scraper\Tests\ScraperPsalmType
+ * @psalm-import-type RaceStadiumNumber from \BVP\Scraper\Tests\ScraperPsalmType
+ * @psalm-import-type RaceArguments from \BVP\Scraper\Tests\ScraperPsalmType
+ * @psalm-import-type RaceExpectedByStadium from \BVP\Scraper\Tests\ScraperPsalmType
+ *
  * @author shimomo
  */
 final class ScraperDataProvider
 {
     /**
+     * @psalm-return non-empty-list<
+     *     array{
+     *         arguments: RaceArguments,
+     *         expected: RaceExpectedByStadium,
+     *     }
+     * >
+     *
      * @return array
      */
     public static function scrapeOddsesProvider(): array
@@ -887,6 +899,13 @@ final class ScraperDataProvider
     }
 
     /**
+     * @psalm-return non-empty-list<
+     *     array{
+     *         arguments: RaceArguments,
+     *         expected: RaceExpectedByStadium,
+     *     }
+     * >
+     *
      * @return array
      */
     public static function scrapePreviewsProvider(): array
@@ -1044,6 +1063,13 @@ final class ScraperDataProvider
     }
 
     /**
+     * @psalm-return non-empty-list<
+     *     array{
+     *         arguments: RaceArguments,
+     *         expected: RaceExpectedByStadium,
+     *     }
+     * >
+     *
      * @return array
      */
     public static function scrapeProgramsProvider(): array
@@ -1395,6 +1421,13 @@ final class ScraperDataProvider
     }
 
     /**
+     * @psalm-return non-empty-list<
+     *     array{
+     *         arguments: RaceArguments,
+     *         expected: RaceExpectedByStadium,
+     *     }
+     * >
+     *
      * @return array
      */
     public static function scrapeResultsProvider(): array
@@ -1607,6 +1640,13 @@ final class ScraperDataProvider
     }
 
     /**
+     * @psalm-return non-empty-list<
+     *     array{
+     *         arguments: array{RaceDate},
+     *         expected: array<RaceStadiumNumber, non-empty-string>,
+     *     }
+     * >
+     *
      * @return array
      */
     public static function scrapeStadiumsProvider(): array
