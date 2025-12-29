@@ -46,6 +46,9 @@ jobs:
       - name: Install Dependencies
         run: composer update --prefer-dist --no-interaction --no-progress
 
+      - name: Run PHP_CodeSniffer
+        run: vendor/bin/phpcs --standard=phpcs.xml.dist
+
       - name: Run PHPUnit ${{ matrix.phpunit-version }}
         run: vendor/bin/phpunit --configuration=phpunit.xml.dist --coverage-xml=build/coverage-xml
 

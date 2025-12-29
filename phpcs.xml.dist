@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="Boatrace Venture Project">
+    <rule ref="PSR12"/>
+    <rule ref="Generic.Files.LineLength">
+        <exclude-pattern>src</exclude-pattern>
+        <exclude-pattern>tests</exclude-pattern>
+    </rule>
+
+    <file>src</file>
+    <file>tests</file>
+</ruleset>
