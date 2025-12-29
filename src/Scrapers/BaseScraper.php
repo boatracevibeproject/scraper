@@ -131,7 +131,7 @@ abstract class BaseScraper implements BaseScraperInterface
                 return 5;
             }
 
-            return match(substr($matches[1], 0, 2)) {
+            return match (substr($matches[1], 0, 2)) {
                 'SG' => 1,
                 'G1' => 2,
                 'G2' => 3,
