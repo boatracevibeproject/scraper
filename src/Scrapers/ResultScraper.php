@@ -201,16 +201,16 @@ final class ResultScraper extends BaseScraper implements ResultScraperInterface
         $scrapedCombinations = $this->filterAllCombinations($scraper);
         $scrapedPayouts = $this->filterAllPayouts($scraper);
 
-        foreach ($scrapedCombinations as $type => $combinations) {
+        foreach ($scrapedCombinations as $betTypeName => $combinations) {
             foreach ($combinations as $index => $combination) {
-                if (!isset($response['payouts'][$type])) {
-                    $response['payouts'][$type] = [];
+                if (!isset($response['payouts'][$betTypeName])) {
+                    $response['payouts'][$betTypeName] = [];
                 }
 
-                if ($combination !== '' && $scrapedPayouts[$type][$index] !== null) {
-                    $response['payouts'][$type][] = [
+                if ($combination !== '' && $scrapedPayouts[$betTypeName][$index] !== null) {
+                    $response['payouts'][$betTypeName][] = [
                         'combination' => $combination,
-                        'amount' => $scrapedPayouts[$type][$index],
+                        'amount' => $scrapedPayouts[$betTypeName][$index],
                     ];
                 }
             }
