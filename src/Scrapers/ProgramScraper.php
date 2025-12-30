@@ -176,6 +176,8 @@ final class ProgramScraper extends BaseScraper implements ProgramScraperInterfac
             $response['boats'][$racerBoatNumber]['racer_assigned_boat_top_3_percent'] = $racerAssignedBoatNumberBoatTop23Percent['assignedBoatTop3Percent'] ?? null;
         }
 
+        ksort($response['boats']);
+
         return $response;
     }
 
