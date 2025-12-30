@@ -34,7 +34,7 @@ final class ProgramScraperDataProvider
                     'stadium_number' => 24,
                     'number' => 1,
                     'closed_at' => '2017-03-31 12:00:00',
-                    'day_label' => '3日目',
+                    'day_label' => '３日目',
                     'grade_label' => '一般',
                     'grade_number' => 5,
                     'title' => 'おおむら桜祭り競走',

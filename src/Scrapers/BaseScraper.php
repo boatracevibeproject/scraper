@@ -78,6 +78,24 @@ abstract class BaseScraper implements BaseScraperInterface
      * @param string $xpath
      * @return ?string
      */
+    protected function filterXPathRaw(Crawler $scraper, string $xpath): ?string
+    {
+        if (!$scraper->filterXPath($xpath)->count()) {
+            return null;
+        }
+
+        return $scraper->filterXPath($xpath)->text();
+    }
+
+    /**
+     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @psalm-param string $xpath
+     * @psalm-return ?string
+     *
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @param string $xpath
+     * @return ?string
+     */
     protected function filterXPathForGradeLabel(Crawler $scraper, string $xpath): ?string
     {
         if (!$scraper->filterXPath($xpath)->count()) {

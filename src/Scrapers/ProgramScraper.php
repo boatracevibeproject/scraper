@@ -56,9 +56,9 @@ final class ProgramScraper extends BaseScraper implements ProgramScraperInterfac
         $subtitleDistanceFormat = '%s/div[2]/div[%s]/h3';
         $deadlineFormat = '%s/div[2]/div[2]/table/tbody/tr[1]/td[%s]';
 
-        foreach (range(1, 14) as $index) {
+        foreach (range(1, 18) as $index) {
             $dayLabelXPath = sprintf($dayLabelFormat, $this->baseXPath, $index);
-            $dayLabel = $this->filterXPath($scraper, $dayLabelXPath);
+            $dayLabel = $this->filterXPathRaw($scraper, $dayLabelXPath);
             if ($dayLabel !== null) {
                 break;
             }
