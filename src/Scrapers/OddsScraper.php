@@ -19,60 +19,54 @@ final class OddsScraper extends BaseScraper implements OddsScraperInterface
     private string $baseXPath = 'descendant-or-self::body/main/div/div/div';
 
     /**
-     * @psalm-param \Carbon\CarbonInterface $raceDate
-     * @psalm-param int<1, 24> $raceStadiumNumber
-     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $date
+     * @psalm-param int<1, 24> $stadiumNumber
+     * @psalm-param int<1, 12> $number
      * @psalm-return array<non-empty-string, mixed>
      *
-     * @param \Carbon\CarbonInterface $raceDate
-     * @param int $raceStadiumNumber
-     * @param int $raceNumber
+     * @param \Carbon\CarbonInterface $date
+     * @param int $stadiumNumber
+     * @param int $number
      * @return array
      */
     #[\Override]
-    public function scrape(
-        CarbonInterface $raceDate,
-        int $raceStadiumNumber,
-        int $raceNumber
-    ): array {
+    public function scrape(CarbonInterface $date, int $stadiumNumber, int $number): array
+    {
         $response = [];
 
-        $response += $this->scrapeWin($raceDate, $raceStadiumNumber, $raceNumber);
-        $response += $this->scrapePlace($raceDate, $raceStadiumNumber, $raceNumber);
-        $response += $this->scrapeExacta($raceDate, $raceStadiumNumber, $raceNumber);
-        $response += $this->scrapeQuinella($raceDate, $raceStadiumNumber, $raceNumber);
-        $response += $this->scrapeQuinellaPlace($raceDate, $raceStadiumNumber, $raceNumber);
-        $response += $this->scrapeTrifecta($raceDate, $raceStadiumNumber, $raceNumber);
-        $response += $this->scrapeTrio($raceDate, $raceStadiumNumber, $raceNumber);
+        $response += $this->scrapeWin($date, $stadiumNumber, $number);
+        $response += $this->scrapePlace($date, $stadiumNumber, $number);
+        $response += $this->scrapeExacta($date, $stadiumNumber, $number);
+        $response += $this->scrapeQuinella($date, $stadiumNumber, $number);
+        $response += $this->scrapeQuinellaPlace($date, $stadiumNumber, $number);
+        $response += $this->scrapeTrifecta($date, $stadiumNumber, $number);
+        $response += $this->scrapeTrio($date, $stadiumNumber, $number);
 
         return $response;
     }
 
     /**
-     * @psalm-param \Carbon\CarbonInterface $raceDate
-     * @psalm-param int<1, 24> $raceStadiumNumber
-     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $date
+     * @psalm-param int<1, 24> $stadiumNumber
+     * @psalm-param int<1, 12> $number
      * @psalm-return array<non-empty-string, mixed>
      *
-     * @param \Carbon\CarbonInterface $raceDate
-     * @param int $raceStadiumNumber
-     * @param int $raceNumber
+     * @param \Carbon\CarbonInterface $date
+     * @param int $stadiumNumber
+     * @param int $number
      * @return array
      */
     #[\Override]
-    public function scrapeWin(
-        CarbonInterface $raceDate,
-        int $raceStadiumNumber,
-        int $raceNumber,
-    ): array {
+    public function scrapeWin(CarbonInterface $date, int $stadiumNumber, int $number): array
+    {
         $response = [];
 
-        $response['race_date'] = $raceDate->format('Y-m-d');
-        $response['race_stadium_number'] = $raceStadiumNumber;
-        $response['race_number'] = $raceNumber;
+        $response['date'] = $date->format('Y-m-d');
+        $response['stadium_number'] = $stadiumNumber;
+        $response['number'] = $number;
 
         $scraperFormat = '%s/owpc/pc/race/oddstf?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
         $scraper = $this->httpBrowser->request('GET', $scraperUrl);
         sleep($this->seconds);
 
@@ -102,30 +96,27 @@ final class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @psalm-param \Carbon\CarbonInterface $raceDate
-     * @psalm-param int<1, 24> $raceStadiumNumber
-     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $date
+     * @psalm-param int<1, 24> $stadiumNumber
+     * @psalm-param int<1, 12> $number
      * @psalm-return array<non-empty-string, mixed>
      *
-     * @param \Carbon\CarbonInterface $raceDate
-     * @param int $raceStadiumNumber
-     * @param int $raceNumber
+     * @param \Carbon\CarbonInterface $date
+     * @param int $stadiumNumber
+     * @param int $number
      * @return array
      */
     #[\Override]
-    public function scrapePlace(
-        CarbonInterface $raceDate,
-        int $raceStadiumNumber,
-        int $raceNumber
-    ): array {
+    public function scrapePlace(CarbonInterface $date, int $stadiumNumber, int $number): array
+    {
         $response = [];
 
-        $response['race_date'] = $raceDate->format('Y-m-d');
-        $response['race_stadium_number'] = $raceStadiumNumber;
-        $response['race_number'] = $raceNumber;
+        $response['date'] = $date->format('Y-m-d');
+        $response['stadium_number'] = $stadiumNumber;
+        $response['number'] = $number;
 
         $scraperFormat = '%s/owpc/pc/race/oddstf?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
         $scraper = $this->httpBrowser->request('GET', $scraperUrl);
         sleep($this->seconds);
 
@@ -155,30 +146,27 @@ final class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @psalm-param \Carbon\CarbonInterface $raceDate
-     * @psalm-param int<1, 24> $raceStadiumNumber
-     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $date
+     * @psalm-param int<1, 24> $stadiumNumber
+     * @psalm-param int<1, 12> $number
      * @psalm-return array<non-empty-string, mixed>
      *
-     * @param \Carbon\CarbonInterface $raceDate
-     * @param int $raceStadiumNumber
-     * @param int $raceNumber
+     * @param \Carbon\CarbonInterface $date
+     * @param int $stadiumNumber
+     * @param int $number
      * @return array
      */
     #[\Override]
-    public function scrapeExacta(
-        CarbonInterface $raceDate,
-        int $raceStadiumNumber,
-        int $raceNumber
-    ): array {
+    public function scrapeExacta(CarbonInterface $date, int $stadiumNumber, int $number): array
+    {
         $response = [];
 
-        $response['race_date'] = $raceDate->format('Y-m-d');
-        $response['race_stadium_number'] = $raceStadiumNumber;
-        $response['race_number'] = $raceNumber;
+        $response['date'] = $date->format('Y-m-d');
+        $response['stadium_number'] = $stadiumNumber;
+        $response['number'] = $number;
 
         $scraperFormat = '%s/owpc/pc/race/odds2tf?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
         $scraper = $this->httpBrowser->request('GET', $scraperUrl);
         sleep($this->seconds);
 
@@ -256,30 +244,27 @@ final class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @psalm-param \Carbon\CarbonInterface $raceDate
-     * @psalm-param int<1, 24> $raceStadiumNumber
-     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $date
+     * @psalm-param int<1, 24> $stadiumNumber
+     * @psalm-param int<1, 12> $number
      * @psalm-return array<non-empty-string, mixed>
      *
-     * @param \Carbon\CarbonInterface $raceDate
-     * @param int $raceStadiumNumber
-     * @param int $raceNumber
+     * @param \Carbon\CarbonInterface $date
+     * @param int $stadiumNumber
+     * @param int $number
      * @return array
      */
     #[\Override]
-    public function scrapeQuinella(
-        CarbonInterface $raceDate,
-        int $raceStadiumNumber,
-        int $raceNumber
-    ): array {
+    public function scrapeQuinella(CarbonInterface $date, int $stadiumNumber, int $number): array
+    {
         $response = [];
 
-        $response['race_date'] = $raceDate->format('Y-m-d');
-        $response['race_stadium_number'] = $raceStadiumNumber;
-        $response['race_number'] = $raceNumber;
+        $response['date'] = $date->format('Y-m-d');
+        $response['stadium_number'] = $stadiumNumber;
+        $response['number'] = $number;
 
         $scraperFormat = '%s/owpc/pc/race/odds2tf?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
         $scraper = $this->httpBrowser->request('GET', $scraperUrl);
         sleep($this->seconds);
 
@@ -327,30 +312,27 @@ final class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @psalm-param \Carbon\CarbonInterface $raceDate
-     * @psalm-param int<1, 24> $raceStadiumNumber
-     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $date
+     * @psalm-param int<1, 24> $stadiumNumber
+     * @psalm-param int<1, 12> $number
      * @psalm-return array<non-empty-string, mixed>
      *
-     * @param \Carbon\CarbonInterface $raceDate
-     * @param int $raceStadiumNumber
-     * @param int $raceNumber
+     * @param \Carbon\CarbonInterface $date
+     * @param int $stadiumNumber
+     * @param int $number
      * @return array
      */
     #[\Override]
-    public function scrapeQuinellaPlace(
-        CarbonInterface $raceDate,
-        int $raceStadiumNumber,
-        int $raceNumber
-    ): array {
+    public function scrapeQuinellaPlace(CarbonInterface $date, int $stadiumNumber, int $number): array
+    {
         $response = [];
 
-        $response['race_date'] = $raceDate->format('Y-m-d');
-        $response['race_stadium_number'] = $raceStadiumNumber;
-        $response['race_number'] = $raceNumber;
+        $response['date'] = $date->format('Y-m-d');
+        $response['stadium_number'] = $stadiumNumber;
+        $response['number'] = $number;
 
         $scraperFormat = '%s/owpc/pc/race/oddsk?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
         $scraper = $this->httpBrowser->request('GET', $scraperUrl);
         sleep($this->seconds);
 
@@ -398,30 +380,27 @@ final class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @psalm-param \Carbon\CarbonInterface $raceDate
-     * @psalm-param int<1, 24> $raceStadiumNumber
-     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $date
+     * @psalm-param int<1, 24> $stadiumNumber
+     * @psalm-param int<1, 12> $number
      * @psalm-return array<non-empty-string, mixed>
      *
-     * @param \Carbon\CarbonInterface $raceDate
-     * @param int $raceStadiumNumber
-     * @param int $raceNumber
+     * @param \Carbon\CarbonInterface $date
+     * @param int $stadiumNumber
+     * @param int $number
      * @return array
      */
     #[\Override]
-    public function scrapeTrifecta(
-        CarbonInterface $raceDate,
-        int $raceStadiumNumber,
-        int $raceNumber
-    ): array {
+    public function scrapeTrifecta(CarbonInterface $date, int $stadiumNumber, int $number): array
+    {
         $response = [];
 
-        $response['race_date'] = $raceDate->format('Y-m-d');
-        $response['race_stadium_number'] = $raceStadiumNumber;
-        $response['race_number'] = $raceNumber;
+        $response['date'] = $date->format('Y-m-d');
+        $response['stadium_number'] = $stadiumNumber;
+        $response['number'] = $number;
 
         $scraperFormat = '%s/owpc/pc/race/odds3t?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
         $scraper = $this->httpBrowser->request('GET', $scraperUrl);
         sleep($this->seconds);
 
@@ -679,30 +658,27 @@ final class OddsScraper extends BaseScraper implements OddsScraperInterface
     }
 
     /**
-     * @psalm-param \Carbon\CarbonInterface $raceDate
-     * @psalm-param int<1, 24> $raceStadiumNumber
-     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $date
+     * @psalm-param int<1, 24> $stadiumNumber
+     * @psalm-param int<1, 12> $number
      * @psalm-return array<non-empty-string, mixed>
      *
-     * @param \Carbon\CarbonInterface $raceDate
-     * @param int $raceStadiumNumber
-     * @param int $raceNumber
+     * @param \Carbon\CarbonInterface $date
+     * @param int $stadiumNumber
+     * @param int $number
      * @return array
      */
     #[\Override]
-    public function scrapeTrio(
-        CarbonInterface $raceDate,
-        int $raceStadiumNumber,
-        int $raceNumber
-    ): array {
+    public function scrapeTrio(CarbonInterface $date, int $stadiumNumber, int $number): array
+    {
         $response = [];
 
-        $response['race_date'] = $raceDate->format('Y-m-d');
-        $response['race_stadium_number'] = $raceStadiumNumber;
-        $response['race_number'] = $raceNumber;
+        $response['date'] = $date->format('Y-m-d');
+        $response['stadium_number'] = $stadiumNumber;
+        $response['number'] = $number;
 
         $scraperFormat = '%s/owpc/pc/race/odds3f?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
         $scraper = $this->httpBrowser->request('GET', $scraperUrl);
         sleep($this->seconds);
 

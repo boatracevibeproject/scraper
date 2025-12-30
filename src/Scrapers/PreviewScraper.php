@@ -21,26 +21,23 @@ final class PreviewScraper extends BaseScraper implements PreviewScraperInterfac
     private string $baseXPath = 'descendant-or-self::body/main/div/div/div';
 
     /**
-     * @psalm-param \Carbon\CarbonInterface $raceDate
-     * @psalm-param int<1, 24> $raceStadiumNumber
-     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $date
+     * @psalm-param int<1, 24> $stadiumNumber
+     * @psalm-param int<1, 12> $number
      * @psalm-return array<non-empty-string, mixed>
      *
-     * @param \Carbon\CarbonInterface $raceDate
-     * @param int $raceStadiumNumber
-     * @param int $raceNumber
+     * @param \Carbon\CarbonInterface $date
+     * @param int $stadiumNumber
+     * @param int $number
      * @return array
      */
     #[\Override]
-    public function scrape(
-        CarbonInterface $raceDate,
-        int $raceStadiumNumber,
-        int $raceNumber
-    ): array {
+    public function scrape(CarbonInterface $date, int $stadiumNumber, int $number): array
+    {
         $response = [];
 
         $scraperFormat = '%s/owpc/pc/race/beforeinfo?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
         $scraper = $this->httpBrowser->request('GET', $scraperUrl);
         sleep($this->seconds);
 
@@ -52,43 +49,43 @@ final class PreviewScraper extends BaseScraper implements PreviewScraperInterfac
             $this->baseLevel = 1;
         }
 
-        $raceWindFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[3]/div/span[2]';
-        $raceWindDirectionNumberFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[4]/p';
-        $raceWaveFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[6]/div/span[2]';
-        $raceWeatherNumberFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[2]/div/span';
-        $raceTemperatureFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[1]/div/span[2]';
-        $raceWaterTemperatureFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[5]/div/span[2]';
+        $windSpeedFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[3]/div/span[2]';
+        $windDirectionNumberFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[4]/p';
+        $waveHeightFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[6]/div/span[2]';
+        $weatherNumberFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[2]/div/span';
+        $airTemperatureFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[1]/div/span[2]';
+        $waterTemperatureFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[5]/div/span[2]';
 
-        $raceWindXPath = sprintf($raceWindFormat, $this->baseXPath, $this->baseLevel + 5);
-        $raceWindDirectionNumberXPath = sprintf($raceWindDirectionNumberFormat, $this->baseXPath, $this->baseLevel + 5);
-        $raceWaveXPath = sprintf($raceWaveFormat, $this->baseXPath, $this->baseLevel + 5);
-        $raceWeatherNameXPath = sprintf($raceWeatherNumberFormat, $this->baseXPath, $this->baseLevel + 5);
-        $raceTemperatureXPath = sprintf($raceTemperatureFormat, $this->baseXPath, $this->baseLevel + 5);
-        $raceWaterTemperatureXPath = sprintf($raceWaterTemperatureFormat, $this->baseXPath, $this->baseLevel + 5);
+        $windSpeedXPath = sprintf($windSpeedFormat, $this->baseXPath, $this->baseLevel + 5);
+        $windDirectionNumberXPath = sprintf($windDirectionNumberFormat, $this->baseXPath, $this->baseLevel + 5);
+        $waveHeightXPath = sprintf($waveHeightFormat, $this->baseXPath, $this->baseLevel + 5);
+        $weatherNameXPath = sprintf($weatherNumberFormat, $this->baseXPath, $this->baseLevel + 5);
+        $airTemperatureXPath = sprintf($airTemperatureFormat, $this->baseXPath, $this->baseLevel + 5);
+        $waterTemperatureXPath = sprintf($waterTemperatureFormat, $this->baseXPath, $this->baseLevel + 5);
 
-        $raceWind = $this->filterXPath($scraper, $raceWindXPath);
-        $raceWindDirectionNumber = $this->filterXPathForWindDirectionNumber($scraper, $raceWindDirectionNumberXPath);
-        $raceWave = $this->filterXPath($scraper, $raceWaveXPath);
-        $raceWeatherName = $this->filterXPath($scraper, $raceWeatherNameXPath);
-        $raceTemperature = $this->filterXPath($scraper, $raceTemperatureXPath);
-        $raceWaterTemperature = $this->filterXPath($scraper, $raceWaterTemperatureXPath);
+        $windSpeed = $this->filterXPath($scraper, $windSpeedXPath);
+        $windDirectionNumber = $this->filterXPathForWindDirectionNumber($scraper, $windDirectionNumberXPath);
+        $waveHeight = $this->filterXPath($scraper, $waveHeightXPath);
+        $weatherName = $this->filterXPath($scraper, $weatherNameXPath);
+        $airTemperature = $this->filterXPath($scraper, $airTemperatureXPath);
+        $waterTemperature = $this->filterXPath($scraper, $waterTemperatureXPath);
 
-        $raceWind = Converter::parseWind($raceWind);
-        $raceWindDirectionNumber = Converter::parseWindDirectionNumber($raceWindDirectionNumber);
-        $raceWave = Converter::parseWave($raceWave);
-        $raceWeatherNumber = Converter::convertToWeatherNumber($raceWeatherName);
-        $raceTemperature = Converter::parseTemperature($raceTemperature);
-        $raceWaterTemperature = Converter::parseTemperature($raceWaterTemperature);
+        $windSpeed = Converter::parseWindSpeed($windSpeed);
+        $windDirectionNumber = Converter::parseWindDirectionNumber($windDirectionNumber);
+        $waveHeight = Converter::parseWaveHeight($waveHeight);
+        $weatherNumber = Converter::convertToWeatherNumber($weatherName);
+        $airTemperature = Converter::parseTemperature($airTemperature);
+        $waterTemperature = Converter::parseTemperature($waterTemperature);
 
-        $response['race_date'] = $raceDate->format('Y-m-d');
-        $response['race_stadium_number'] = $raceStadiumNumber;
-        $response['race_number'] = $raceNumber;
-        $response['race_wind'] = $raceWind;
-        $response['race_wind_direction_number'] = $raceWindDirectionNumber;
-        $response['race_wave'] = $raceWave;
-        $response['race_weather_number'] = $raceWeatherNumber;
-        $response['race_temperature'] = $raceTemperature;
-        $response['race_water_temperature'] = $raceWaterTemperature;
+        $response['date'] = $date->format('Y-m-d');
+        $response['stadium_number'] = $stadiumNumber;
+        $response['number'] = $number;
+        $response['wind_speed'] = $windSpeed;
+        $response['wind_direction_number'] = $windDirectionNumber;
+        $response['wave_height'] = $waveHeight;
+        $response['weather_number'] = $weatherNumber;
+        $response['air_temperature'] = $airTemperature;
+        $response['water_temperature'] = $waterTemperature;
 
         $response += $this->scrapeBoats($scraper);
 

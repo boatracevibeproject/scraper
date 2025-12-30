@@ -30,9 +30,9 @@ final class OddsScraperDataProvider
             [
                 'arguments' => [Carbon::parse('2017-03-31'), 24, 1],
                 'expected' => [
-                    'race_date' => '2017-03-31',
-                    'race_stadium_number' => 24,
-                    'race_number' => 1,
+                    'date' => '2017-03-31',
+                    'stadium_number' => 24,
+                    'number' => 1,
                     'win_odds' => [
                         1 => 1.0,
                         2 => 25.6,
@@ -459,9 +459,9 @@ final class OddsScraperDataProvider
             [
                 'arguments' => [Carbon::parse('2019-10-14'), 2, 1],
                 'expected' => [
-                    'race_date' => '2019-10-14',
-                    'race_stadium_number' => 2,
-                    'race_number' => 1,
+                    'date' => '2019-10-14',
+                    'stadium_number' => 2,
+                    'number' => 1,
                     'win_odds' => [
                         1 => null,
                         2 => null,

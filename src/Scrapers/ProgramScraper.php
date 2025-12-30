@@ -6,6 +6,7 @@ namespace BVP\Scraper\Scrapers;
 
 use BVP\Converter\Converter;
 use BVP\Trimmer\Trimmer;
+use Carbon\CarbonImmutable as Carbon;
 use Carbon\CarbonInterface;
 use Symfony\Component\DomCrawler\Crawler;
 
@@ -22,23 +23,23 @@ final class ProgramScraper extends BaseScraper implements ProgramScraperInterfac
     private string $baseXPath = 'descendant-or-self::body/main/div/div/div';
 
     /**
-     * @psalm-param \Carbon\CarbonInterface $raceDate
-     * @psalm-param int<1, 24> $raceStadiumNumber
-     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $date
+     * @psalm-param int<1, 24> $stadiumNumber
+     * @psalm-param int<1, 12> $number
      * @psalm-return array<non-empty-string, mixed>
      *
-     * @param \Carbon\CarbonInterface $raceDate
-     * @param int $raceStadiumNumber
-     * @param int $raceNumber
+     * @param \Carbon\CarbonInterface $date
+     * @param int $stadiumNumber
+     * @param int $number
      * @return array
      */
     #[\Override]
-    public function scrape(CarbonInterface $raceDate, int $raceStadiumNumber, int $raceNumber): array
+    public function scrape(CarbonInterface $date, int $stadiumNumber, int $number): array
     {
         $response = [];
 
         $scraperFormat = '%s/owpc/pc/race/racelist?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
         $scraper = $this->httpBrowser->request('GET', $scraperUrl);
         sleep($this->seconds);
 
@@ -50,48 +51,48 @@ final class ProgramScraper extends BaseScraper implements ProgramScraperInterfac
             $this->baseLevel = 1;
         }
 
-        $raceDayLabelFormat = '%s/div[2]/div[1]/ul/li[%s]/span/span';
-        $raceGradeFormat = '%s/div[1]/div/div[2]';
-        $raceTitleFormat = '%s/div[1]/div/div[2]/h2';
-        $raceSubtitleDistanceFormat = '%s/div[2]/div[%s]/h3';
-        $raceDeadlineFormat = '%s/div[2]/div[2]/table/tbody/tr[1]/td[%s]';
+        $dayLabelFormat = '%s/div[2]/div[1]/ul/li[%s]/span/span';
+        $gradeFormat = '%s/div[1]/div/div[2]';
+        $titleFormat = '%s/div[1]/div/div[2]/h2';
+        $subtitleDistanceFormat = '%s/div[2]/div[%s]/h3';
+        $deadlineFormat = '%s/div[2]/div[2]/table/tbody/tr[1]/td[%s]';
 
         foreach (range(1, 14) as $index) {
-            $raceDayLabelXPath = sprintf($raceDayLabelFormat, $this->baseXPath, $index);
-            $raceDayLabel = $this->filterXPath($scraper, $raceDayLabelXPath);
-            if ($raceDayLabel !== null) {
+            $dayLabelXPath = sprintf($dayLabelFormat, $this->baseXPath, $index);
+            $dayLabel = $this->filterXPath($scraper, $dayLabelXPath);
+            if ($dayLabel !== null) {
                 break;
             }
         }
 
-        $raceGradeXPath = sprintf($raceGradeFormat, $this->baseXPath);
-        $raceTitleXPath = sprintf($raceTitleFormat, $this->baseXPath);
-        $raceSubtitleDistanceXPath = sprintf($raceSubtitleDistanceFormat, $this->baseXPath, $this->baseLevel + 3);
-        $raceDeadlineXPath = sprintf($raceDeadlineFormat, $this->baseXPath, $raceNumber + 1);
+        $gradeXPath = sprintf($gradeFormat, $this->baseXPath);
+        $titleXPath = sprintf($titleFormat, $this->baseXPath);
+        $subtitleDistanceXPath = sprintf($subtitleDistanceFormat, $this->baseXPath, $this->baseLevel + 3);
+        $deadlineXPath = sprintf($deadlineFormat, $this->baseXPath, $number + 1);
 
-        $raceGradeLabel = $this->filterXPathForGradeLabel($scraper, $raceGradeXPath);
-        $raceGradeNumber = $this->filterXPathForGradeNumber($scraper, $raceGradeXPath);
-        $raceTitle = $this->filterXPath($scraper, $raceTitleXPath);
-        $raceSubtitleDistance = $this->filterXPath($scraper, $raceSubtitleDistanceXPath);
-        $raceDeadline = $this->filterXPath($scraper, $raceDeadlineXPath);
+        $gradeLabel = $this->filterXPathForGradeLabel($scraper, $gradeXPath);
+        $gradeNumber = $this->filterXPathForGradeNumber($scraper, $gradeXPath);
+        $title = $this->filterXPath($scraper, $titleXPath);
+        $subtitleDistance = $this->filterXPath($scraper, $subtitleDistanceXPath);
+        $deadline = $this->filterXPath($scraper, $deadlineXPath);
 
         $raceClosedAt = null;
-        if ($raceDeadline !== null) {
-            $raceClosedAt = $raceDate->setTimeFromTimeString($raceDeadline)->format('Y-m-d H:i:s');
+        if ($deadline !== null) {
+            $raceClosedAt = $date->setTimeFromTimeString($deadline)->format('Y-m-d H:i:s');
         }
 
-        $raceSubtitleDistanceValues = $this->explodeSubtitleDistance($raceSubtitleDistance);
+        $subtitleDistanceValues = $this->explodeSubtitleDistance($subtitleDistance);
 
-        $response['race_date'] = $raceDate->format('Y-m-d');
-        $response['race_stadium_number'] = $raceStadiumNumber;
-        $response['race_number'] = $raceNumber;
-        $response['race_closed_at'] = $raceClosedAt;
-        $response['race_day_label'] = $raceDayLabel;
-        $response['race_grade_label'] = $raceGradeLabel;
-        $response['race_grade_number'] = $raceGradeNumber;
-        $response['race_title'] = $raceTitle;
-        $response['race_subtitle'] = $raceSubtitleDistanceValues['subtitle'] ?? null;
-        $response['race_distance'] = $raceSubtitleDistanceValues['distance'] ?? null;
+        $response['date'] = $date->format('Y-m-d');
+        $response['stadium_number'] = $stadiumNumber;
+        $response['number'] = $number;
+        $response['closed_at'] = $raceClosedAt;
+        $response['day_label'] = $dayLabel;
+        $response['grade_label'] = $gradeLabel;
+        $response['grade_number'] = $gradeNumber;
+        $response['title'] = $title;
+        $response['subtitle'] = $subtitleDistanceValues['subtitle'] ?? null;
+        $response['distance'] = $subtitleDistanceValues['distance'] ?? null;
 
         $response += $this->scrapeBoats($scraper);
 

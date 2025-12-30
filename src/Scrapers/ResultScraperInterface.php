@@ -13,19 +13,15 @@ use Carbon\CarbonInterface;
 interface ResultScraperInterface extends ScraperContractInterface
 {
     /**
-     * @psalm-param \Carbon\CarbonInterface $raceDate
-     * @psalm-param int<1, 24> $raceStadiumNumber
-     * @psalm-param int<1, 12> $raceNumber
+     * @psalm-param \Carbon\CarbonInterface $date
+     * @psalm-param int<1, 24> $stadiumNumber
+     * @psalm-param int<1, 12> $number
      * @psalm-return array<non-empty-string, mixed>
      *
-     * @param \Carbon\CarbonInterface $raceDate
-     * @param int $raceStadiumNumber
-     * @param int $raceNumber
+     * @param \Carbon\CarbonInterface $date
+     * @param int $stadiumNumber
+     * @param int $number
      * @return array
      */
-    public function scrape(
-        CarbonInterface $raceDate,
-        int $raceStadiumNumber,
-        int $raceNumber
-    ): array;
+    public function scrape(CarbonInterface $date, int $stadiumNumber, int $number): array;
 }
