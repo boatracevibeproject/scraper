@@ -6,7 +6,6 @@ namespace BVP\Scraper\Scrapers;
 
 use BVP\Converter\Converter;
 use BVP\Trimmer\Trimmer;
-use Carbon\CarbonImmutable as Carbon;
 use Carbon\CarbonInterface;
 use Symfony\Component\DomCrawler\Crawler;
 
