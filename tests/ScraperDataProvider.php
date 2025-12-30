@@ -1502,55 +1502,55 @@ final class ScraperDataProvider
                                 'trifecta' => [
                                     [
                                         'combination' => '1-2-5',
-                                        'payout' => 460,
+                                        'amount' => 460,
                                     ],
                                 ],
                                 'trio' => [
                                     [
                                         'combination' => '1=2=5',
-                                        'payout' => 320,
+                                        'amount' => 320,
                                     ],
                                 ],
                                 'exacta' => [
                                     [
                                         'combination' => '1-2',
-                                        'payout' => 180,
+                                        'amount' => 180,
                                     ],
                                 ],
                                 'quinella' => [
                                     [
                                         'combination' => '1=2',
-                                        'payout' => 150,
+                                        'amount' => 150,
                                     ],
                                 ],
                                 'quinella_place' => [
                                     [
                                         'combination' => '1=2',
-                                        'payout' => 110,
+                                        'amount' => 110,
                                     ],
                                     [
                                         'combination' => '1=5',
-                                        'payout' => 240,
+                                        'amount' => 240,
                                     ],
                                     [
                                         'combination' => '2=5',
-                                        'payout' => 280,
+                                        'amount' => 280,
                                     ],
                                 ],
                                 'win' => [
                                     [
                                         'combination' => '1',
-                                        'payout' => 100,
+                                        'amount' => 100,
                                     ],
                                 ],
                                 'place' => [
                                     [
                                         'combination' => '1',
-                                        'payout' => 100,
+                                        'amount' => 100,
                                     ],
                                     [
                                         'combination' => '2',
-                                        'payout' => 150,
+                                        'amount' => 150,
                                     ],
                                 ],
                             ],

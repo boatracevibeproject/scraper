@@ -181,13 +181,13 @@ final class ResultScraper extends BaseScraper implements ResultScraperInterface
      * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
      * @psalm-return array{
      *     payouts?: array{
-     *         trifecta?: list<array{combination: non-empty-string, payout: int<0, max>}>,
-     *         trio?: list<array{combination: non-empty-string, payout: int<0, max>}>,
-     *         exacta?: list<array{combination: non-empty-string, payout: int<0, max>}>,
-     *         quinella?: list<array{combination: non-empty-string, payout: int<0, max>}>,
-     *         quinella_place?: list<array{combination: non-empty-string, payout: int<0, max>}>,
-     *         win?: list<array{combination: non-empty-string, payout: int<0, max>}>,
-     *         place?: list<array{combination: non-empty-string, payout: int<0, max>}>,
+     *         trifecta?: list<array{combination: non-empty-string, amount: int<0, max>}>,
+     *         trio?: list<array{combination: non-empty-string, amount: int<0, max>}>,
+     *         exacta?: list<array{combination: non-empty-string, amount: int<0, max>}>,
+     *         quinella?: list<array{combination: non-empty-string, amount: int<0, max>}>,
+     *         quinella_place?: list<array{combination: non-empty-string, amount: int<0, max>}>,
+     *         win?: list<array{combination: non-empty-string, amount: int<0, max>}>,
+     *         place?: list<array{combination: non-empty-string, amount: int<0, max>}>,
      *     }
      * }
      *
@@ -210,7 +210,7 @@ final class ResultScraper extends BaseScraper implements ResultScraperInterface
                 if ($combination !== '' && $scrapedPayouts[$type][$index] !== null) {
                     $response['payouts'][$type][] = [
                         'combination' => $combination,
-                        'payout' => $scrapedPayouts[$type][$index],
+                        'amount' => $scrapedPayouts[$type][$index],
                     ];
                 }
             }
