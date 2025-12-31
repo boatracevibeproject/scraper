@@ -21,8 +21,8 @@
     },
     "require": {
         "php": "^8.2",
-        "bvp/converter": "^0.2",
-        "bvp/trimmer": "^0.1",
+        "bvp/converter": "^6.0",
+        "bvp/trimmer": "^6.0",
         "nesbot/carbon": "^2.63 || ^3.0",
         "symfony/browser-kit": "^6.0 || ^7.0",
         "symfony/css-selector": "^6.0 || ^7.0",
