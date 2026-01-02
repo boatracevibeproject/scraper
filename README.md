@@ -36,7 +36,7 @@ composer require bvp/scraper
 | `Scraper::scrapeOdds(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$date = null,`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$stadiumNumber = null,`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$number = null`<br>`)` | オッズを取得 | 同上 |
 | `Scraper::scrapeResults(`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$date = null,`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$stadiumNumber = null,`<br>&nbsp;&nbsp;&nbsp;&nbsp;`$number = null`<br>`)` | 結果を取得 | 同上 |
 
-**$raceDate の例**
+**$date の例**
 - `'2025-01-01'`
 - `'2025/01/01'`
 - `'yesterday'`
