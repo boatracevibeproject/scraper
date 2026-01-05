@@ -112,18 +112,18 @@ final class ScraperCore implements ScraperCoreInterface
         $response = [];
         foreach ($raceStadiumNumbers as $raceStadiumNumber) {
             foreach ($raceNumbers as $raceNumber) {
-                if (method_exists($scraper, 'scrape')) {
-                    $response[$raceStadiumNumber][$raceNumber] = $this->callWithRetry(
-                        function () use ($scraper, $raceDate, $raceStadiumNumber, $raceNumber): array {
-                            /** @psalm-var array<non-empty-string, mixed> */
-                            return $scraper->scrape($raceDate, $raceStadiumNumber, $raceNumber);
-                        }
-                    );
-                } elseif (preg_match('/^scrape([a-zA-Z]+)Odds$/u', $name, $matches)) {
+                if (preg_match('/^scrape([a-zA-Z]+)Odds$/u', $name, $matches)) {
                     $response[$raceStadiumNumber][$raceNumber] = $this->callWithRetry(
                         function () use ($scraper, $matches, $raceDate, $raceStadiumNumber, $raceNumber): array {
                             /** @psalm-var array<non-empty-string, mixed> */
                             return $scraper->{'scrape' . $matches[1]}($raceDate, $raceStadiumNumber, $raceNumber);
+                        }
+                    );
+                } elseif (method_exists($scraper, 'scrape')) {
+                    $response[$raceStadiumNumber][$raceNumber] = $this->callWithRetry(
+                        function () use ($scraper, $raceDate, $raceStadiumNumber, $raceNumber): array {
+                            /** @psalm-var array<non-empty-string, mixed> */
+                            return $scraper->scrape($raceDate, $raceStadiumNumber, $raceNumber);
                         }
                     );
                 }
