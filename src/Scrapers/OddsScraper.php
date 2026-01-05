@@ -34,8 +34,7 @@ final class OddsScraper extends BaseScraper implements OddsScraperInterface
     {
         $response = [];
 
-        $response += $this->scrapeWin($date, $stadiumNumber, $number);
-        $response += $this->scrapePlace($date, $stadiumNumber, $number);
+        $response += $this->scrapeSingle($date, $stadiumNumber, $number);
         $response += $this->scrapeExacta($date, $stadiumNumber, $number);
         $response += $this->scrapeQuinella($date, $stadiumNumber, $number);
         $response += $this->scrapeQuinellaPlace($date, $stadiumNumber, $number);
@@ -134,6 +133,70 @@ final class OddsScraper extends BaseScraper implements OddsScraperInterface
         $place4XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[4]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
         $place5XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[5]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
         $place6XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[6]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
+
+        $response['place_odds'][1] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $place1XPath);
+        $response['place_odds'][2] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $place2XPath);
+        $response['place_odds'][3] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $place3XPath);
+        $response['place_odds'][4] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $place4XPath);
+        $response['place_odds'][5] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $place5XPath);
+        $response['place_odds'][6] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $place6XPath);
+
+        return $response;
+    }
+
+    /**
+     * @psalm-param \Carbon\CarbonInterface $date
+     * @psalm-param int<1, 24> $stadiumNumber
+     * @psalm-param int<1, 12> $number
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param \Carbon\CarbonInterface $date
+     * @param int $stadiumNumber
+     * @param int $number
+     * @return array
+     */
+    #[\Override]
+    public function scrapeSingle(CarbonInterface $date, int $stadiumNumber, int $number): array
+    {
+        $response = [];
+
+        $response['date'] = $date->format('Y-m-d');
+        $response['stadium_number'] = $stadiumNumber;
+        $response['number'] = $number;
+
+        $scraperFormat = '%s/owpc/pc/race/oddstf?hd=%s&jcd=%02d&rno=%d';
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
+        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        sleep($this->seconds);
+
+        $levelFormat = '%s/div[2]/div[3]/ul/li';
+        $levelXPath = sprintf($levelFormat, $this->baseXPath);
+
+        $this->baseLevel = 0;
+        if ($this->filterXPath($scraper, $levelXPath) !== null) {
+            $this->baseLevel = 1;
+        }
+
+        $win1XPath = sprintf('%s/div[2]/div[%s]/div[1]/div[2]/table/tbody[1]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
+        $win2XPath = sprintf('%s/div[2]/div[%s]/div[1]/div[2]/table/tbody[2]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
+        $win3XPath = sprintf('%s/div[2]/div[%s]/div[1]/div[2]/table/tbody[3]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
+        $win4XPath = sprintf('%s/div[2]/div[%s]/div[1]/div[2]/table/tbody[4]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
+        $win5XPath = sprintf('%s/div[2]/div[%s]/div[1]/div[2]/table/tbody[5]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
+        $win6XPath = sprintf('%s/div[2]/div[%s]/div[1]/div[2]/table/tbody[6]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
+
+        $place1XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[1]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
+        $place2XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[2]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
+        $place3XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[3]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
+        $place4XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[4]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
+        $place5XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[5]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
+        $place6XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[6]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
+
+        $response['win_odds'][1] = $this->filterXPathForOdds($scraper, $win1XPath);
+        $response['win_odds'][2] = $this->filterXPathForOdds($scraper, $win2XPath);
+        $response['win_odds'][3] = $this->filterXPathForOdds($scraper, $win3XPath);
+        $response['win_odds'][4] = $this->filterXPathForOdds($scraper, $win4XPath);
+        $response['win_odds'][5] = $this->filterXPathForOdds($scraper, $win5XPath);
+        $response['win_odds'][6] = $this->filterXPathForOdds($scraper, $win6XPath);
 
         $response['place_odds'][1] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $place1XPath);
         $response['place_odds'][2] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $place2XPath);
