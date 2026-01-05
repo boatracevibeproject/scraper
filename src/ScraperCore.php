@@ -48,6 +48,7 @@ final class ScraperCore implements ScraperCoreInterface
         'scrapeExactaOdds' => OddsScraper::class,
         'scrapeQuinellaOdds' => OddsScraper::class,
         'scrapeQuinellaPlaceOdds' => OddsScraper::class,
+        'scrapePairOdds' => OddsScraper::class,
         'scrapeTrifectaOdds' => OddsScraper::class,
         'scrapeTrioOdds' => OddsScraper::class,
         'scrapePreviews' => PreviewScraper::class,
