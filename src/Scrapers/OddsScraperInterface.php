@@ -141,4 +141,17 @@ interface OddsScraperInterface extends ScraperContractInterface
      * @return array
      */
     public function scrapeTrio(CarbonInterface $date, int $stadiumNumber, int $number): array;
+
+    /**
+     * @psalm-param \Carbon\CarbonInterface $date
+     * @psalm-param int<1, 24> $stadiumNumber
+     * @psalm-param int<1, 12> $number
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param \Carbon\CarbonInterface $date
+     * @param int $stadiumNumber
+     * @param int $number
+     * @return array
+     */
+    public function scrapeTriple(CarbonInterface $date, int $stadiumNumber, int $number): array;
 }

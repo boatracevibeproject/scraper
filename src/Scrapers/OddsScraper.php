@@ -36,8 +36,7 @@ final class OddsScraper extends BaseScraper implements OddsScraperInterface
 
         $response += $this->scrapeSingle($date, $stadiumNumber, $number);
         $response += $this->scrapePair($date, $stadiumNumber, $number);
-        $response += $this->scrapeTrifecta($date, $stadiumNumber, $number);
-        $response += $this->scrapeTrio($date, $stadiumNumber, $number);
+        $response += $this->scrapeTriple($date, $stadiumNumber, $number);
 
         return $response;
     }
@@ -924,6 +923,28 @@ final class OddsScraper extends BaseScraper implements OddsScraperInterface
         $response['trio_odds'][3][4][6] = $this->filterXPathForOdds($scraper, $trio346XPath);
         $response['trio_odds'][3][5][6] = $this->filterXPathForOdds($scraper, $trio356XPath);
         $response['trio_odds'][4][5][6] = $this->filterXPathForOdds($scraper, $trio456XPath);
+
+        return $response;
+    }
+
+    /**
+     * @psalm-param \Carbon\CarbonInterface $date
+     * @psalm-param int<1, 24> $stadiumNumber
+     * @psalm-param int<1, 12> $number
+     * @psalm-return array<non-empty-string, mixed>
+     *
+     * @param \Carbon\CarbonInterface $date
+     * @param int $stadiumNumber
+     * @param int $number
+     * @return array
+     */
+    #[\Override]
+    public function scrapeTriple(CarbonInterface $date, int $stadiumNumber, int $number): array
+    {
+        $response = [];
+
+        $response += $this->scrapeTrifecta($date, $stadiumNumber, $number);
+        $response += $this->scrapeTrio($date, $stadiumNumber, $number);
 
         return $response;
     }
