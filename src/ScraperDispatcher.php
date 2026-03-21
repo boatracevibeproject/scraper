@@ -26,7 +26,7 @@ use Symfony\Component\BrowserKit\HttpBrowser;
  *
  * @author shimomo
  */
-final class ScraperCore implements ScraperCoreInterface
+final class ScraperDispatcher implements ScraperDispatcherInterface
 {
     /**
      * @psalm-var array<non-empty-string, \BVP\Scraper\Scrapers\BaseScraperInterface>

@@ -10,22 +10,22 @@ namespace BVP\Scraper;
 interface ScraperInterface extends ScraperContractInterface
 {
     /**
-     * @psalm-param ?\BVP\Scraper\ScraperCoreInterface $scraperCore
+     * @psalm-param ?\BVP\Scraper\ScraperDispatcherInterface $scraperDispatcher
      * @psalm-return \BVP\Scraper\ScraperInterface
      *
-     * @param ?\BVP\Scraper\ScraperCoreInterface $scraperCore
+     * @param ?\BVP\Scraper\ScraperDispatcherInterface $scraperDispatcher
      * @return \BVP\Scraper\ScraperInterface
      */
-    public static function getInstance(?ScraperCoreInterface $scraperCore = null): ScraperInterface;
+    public static function getInstance(?ScraperDispatcherInterface $scraperDispatcher = null): ScraperInterface;
 
     /**
-     * @psalm-param ?\BVP\Scraper\ScraperCoreInterface $scraperCore
+     * @psalm-param ?\BVP\Scraper\ScraperDispatcherInterface $scraperDispatcher
      * @psalm-return \BVP\Scraper\ScraperInterface
      *
-     * @param ?\BVP\Scraper\ScraperCoreInterface $scraperCore
+     * @param ?\BVP\Scraper\ScraperDispatcherInterface $scraperDispatcher
      * @return \BVP\Scraper\ScraperInterface
      */
-    public static function createInstance(?ScraperCoreInterface $scraperCore = null): ScraperInterface;
+    public static function createInstance(?ScraperDispatcherInterface $scraperDispatcher = null): ScraperInterface;
 
     /**
      * @psalm-return void

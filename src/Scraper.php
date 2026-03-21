@@ -28,11 +28,11 @@ final class Scraper implements ScraperInterface
     private static ?ScraperInterface $instance;
 
     /**
-     * @psalm-param \BVP\Scraper\ScraperCoreInterface $scraper
+     * @psalm-param \BVP\Scraper\ScraperDispatcherInterface $scraper
      *
-     * @param \BVP\Scraper\ScraperCoreInterface $scraper
+     * @param \BVP\Scraper\ScraperDispatcherInterface $scraper
      */
-    public function __construct(private readonly ScraperCoreInterface $scraper)
+    public function __construct(private readonly ScraperDispatcherInterface $scraper)
     {
         //
     }
@@ -92,29 +92,29 @@ final class Scraper implements ScraperInterface
     }
 
     /**
-     * @psalm-param ?\BVP\Scraper\ScraperCoreInterface $scraperCore
+     * @psalm-param ?\BVP\Scraper\ScraperDispatcherInterface $scraperDispatcher
      * @psalm-return \BVP\Scraper\ScraperInterface
      *
-     * @param ?\BVP\Scraper\ScraperCoreInterface $scraperCore
+     * @param ?\BVP\Scraper\ScraperDispatcherInterface $scraperDispatcher
      * @return \BVP\Scraper\ScraperInterface
      */
     #[\Override]
-    public static function getInstance(?ScraperCoreInterface $scraperCore = null): ScraperInterface
+    public static function getInstance(?ScraperDispatcherInterface $scraperDispatcher = null): ScraperInterface
     {
-        return self::$instance ??= new self($scraperCore ?? new ScraperCore());
+        return self::$instance ??= new self($scraperDispatcher ?? new ScraperDispatcher());
     }
 
     /**
-     * @psalm-param ?\BVP\Scraper\ScraperCoreInterface $scraperCore
+     * @psalm-param ?\BVP\Scraper\ScraperDispatcherInterface $scraperDispatcher
      * @psalm-return \BVP\Scraper\ScraperInterface
      *
-     * @param ?\BVP\Scraper\ScraperCoreInterface $scraperCore
+     * @param ?\BVP\Scraper\ScraperDispatcherInterface $scraperDispatcher
      * @return \BVP\Scraper\ScraperInterface
      */
     #[\Override]
-    public static function createInstance(?ScraperCoreInterface $scraperCore = null): ScraperInterface
+    public static function createInstance(?ScraperDispatcherInterface $scraperDispatcher = null): ScraperInterface
     {
-        return self::$instance = new self($scraperCore ?? new ScraperCore());
+        return self::$instance = new self($scraperDispatcher ?? new ScraperDispatcher());
     }
 
     /**

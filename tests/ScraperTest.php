@@ -103,7 +103,7 @@ final class ScraperTest extends TestCase
     {
         $this->expectException(\BadMethodCallException::class);
         $this->expectExceptionMessage(
-            "BVP\Scraper\ScraperCore::resolveScraperClass() - " .
+            "BVP\Scraper\ScraperDispatcher::resolveScraperClass() - " .
             "Scraper name for `ghost` is invalid."
         );
 
@@ -120,7 +120,7 @@ final class ScraperTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage(
-            "BVP\Scraper\ScraperCore::getRaceStadiumNumbers() - " .
+            "BVP\Scraper\ScraperDispatcher::getRaceStadiumNumbers() - " .
             "Race stadium number for `#` is invalid."
         );
 
@@ -136,7 +136,7 @@ final class ScraperTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage(
-            "BVP\Scraper\ScraperCore::getRaceNumbers() - " .
+            "BVP\Scraper\ScraperDispatcher::getRaceNumbers() - " .
             "Race number for `#` is invalid."
         );
 

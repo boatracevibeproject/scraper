@@ -7,7 +7,7 @@ namespace BVP\Scraper;
 /**
  * @author shimomo
  */
-interface ScraperCoreInterface extends ScraperContractInterface
+interface ScraperDispatcherInterface extends ScraperContractInterface
 {
     //
 }

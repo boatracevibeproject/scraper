@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace BVP\Scraper\Tests;
 
-use BVP\Scraper\ScraperCore;
+use BVP\Scraper\ScraperDispatcher;
 use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\TestCase;
 
@@ -16,15 +16,15 @@ use PHPUnit\Framework\TestCase;
  *
  * @author shimomo
  */
-final class ScraperCoreTest extends TestCase
+final class ScraperDispatcherTest extends TestCase
 {
     /**
      * @psalm-suppress PropertyNotSetInConstructor
-     * @psalm-var \BVP\Scraper\ScraperCore
+     * @psalm-var \BVP\Scraper\ScraperDispatcher
      *
-     * @var \BVP\Scraper\ScraperCore
+     * @var \BVP\Scraper\ScraperDispatcher
      */
-    protected ScraperCore $scraper;
+    protected ScraperDispatcher $scraper;
 
     /**
      * @psalm-return void
@@ -34,7 +34,7 @@ final class ScraperCoreTest extends TestCase
     #[\Override]
     protected function setUp(): void
     {
-        $this->scraper = new ScraperCore();
+        $this->scraper = new ScraperDispatcher();
     }
 
     /**
@@ -121,7 +121,7 @@ final class ScraperCoreTest extends TestCase
     {
         $this->expectException(\BadMethodCallException::class);
         $this->expectExceptionMessage(
-            "BVP\Scraper\ScraperCore::resolveScraperClass() - " .
+            "BVP\Scraper\ScraperDispatcher::resolveScraperClass() - " .
             "Scraper name for `ghost` is invalid."
         );
 
@@ -138,7 +138,7 @@ final class ScraperCoreTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage(
-            "BVP\Scraper\ScraperCore::getRaceStadiumNumbers() - " .
+            "BVP\Scraper\ScraperDispatcher::getRaceStadiumNumbers() - " .
             "Race stadium number for `#` is invalid."
         );
 
@@ -154,7 +154,7 @@ final class ScraperCoreTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage(
-            "BVP\Scraper\ScraperCore::getRaceNumbers() - " .
+            "BVP\Scraper\ScraperDispatcher::getRaceNumbers() - " .
             "Race number for `#` is invalid."
         );
 
