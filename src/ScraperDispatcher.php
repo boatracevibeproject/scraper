@@ -47,7 +47,7 @@ final class ScraperDispatcher implements ScraperDispatcherInterface
         'scrapeOdds' => OddsScraper::class,
         'scrapeSingleOdds' => OddsScraper::class,
         'scrapePairOdds' => OddsScraper::class,
-        'scrapeTriple' => OddsScraper::class,
+        'scrapeTripleOdds' => OddsScraper::class,
         'scrapeWinOdds' => OddsScraper::class,
         'scrapePlaceOdds' => OddsScraper::class,
         'scrapeExactaOdds' => OddsScraper::class,
