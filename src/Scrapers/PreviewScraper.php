@@ -30,7 +30,7 @@ class PreviewScraper extends BaseScraper implements PreviewScraperInterface
 
         $scraperFormat = '%s/owpc/pc/race/beforeinfo?hd=%s&jcd=%02d&rno=%d';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
-        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
         sleep($this->seconds);
 
         $levelFormat = '%s/div[2]/div[3]/ul/li';

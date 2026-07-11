@@ -54,7 +54,7 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
 
         $scraperFormat = '%s/owpc/pc/race/oddstf?hd=%s&jcd=%02d&rno=%d';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
-        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
         sleep($this->seconds);
 
         $levelFormat = '%s/div[2]/div[3]/ul/li';
@@ -98,7 +98,7 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
 
         $scraperFormat = '%s/owpc/pc/race/oddstf?hd=%s&jcd=%02d&rno=%d';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
-        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
         sleep($this->seconds);
 
         $levelFormat = '%s/div[2]/div[3]/ul/li';
@@ -142,7 +142,7 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
 
         $scraperFormat = '%s/owpc/pc/race/odds2tf?hd=%s&jcd=%02d&rno=%d';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
-        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
         sleep($this->seconds);
 
         $levelFormat = '%s/div[2]/div[3]/ul/li';
@@ -234,7 +234,7 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
 
         $scraperFormat = '%s/owpc/pc/race/odds2tf?hd=%s&jcd=%02d&rno=%d';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
-        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
         sleep($this->seconds);
 
         $levelFormat = '%s/div[2]/div[3]/ul/li';
@@ -296,7 +296,7 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
 
         $scraperFormat = '%s/owpc/pc/race/oddsk?hd=%s&jcd=%02d&rno=%d';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
-        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
         sleep($this->seconds);
 
         $levelFormat = '%s/div[2]/div[3]/ul/li';
@@ -358,7 +358,7 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
 
         $scraperFormat = '%s/owpc/pc/race/odds3t?hd=%s&jcd=%02d&rno=%d';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
-        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
         sleep($this->seconds);
 
         $levelFormat = '%s/div[2]/div[3]/ul/li';
@@ -630,7 +630,7 @@ class OddsScraper extends BaseScraper implements OddsScraperInterface
 
         $scraperFormat = '%s/owpc/pc/race/odds3f?hd=%s&jcd=%02d&rno=%d';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'), $raceStadiumNumber, $raceNumber);
-        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
         sleep($this->seconds);
 
         $levelFormat = '%s/div[2]/div[3]/ul/li';
