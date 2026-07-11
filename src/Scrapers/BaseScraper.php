@@ -30,7 +30,7 @@ abstract class BaseScraper
     /**
      * @var int
      */
-    protected int $seconds = 1;
+    protected int $seconds = 3;
 
     /**
      * @param  \Symfony\Component\BrowserKit\HttpBrowser  $httpBrowser
