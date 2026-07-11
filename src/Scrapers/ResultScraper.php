@@ -38,7 +38,7 @@ final class ResultScraper extends BaseScraper implements ResultScraperInterface
 
         $scraperFormat = '%s/owpc/pc/race/raceresult?hd=%s&jcd=%02d&rno=%d';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
-        $scraper = $this->httpBrowser->request('GET', $scraperUrl);
+        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
         sleep($this->seconds);
 
         $levelFormat = '%s/div[2]/div[3]/ul/li';

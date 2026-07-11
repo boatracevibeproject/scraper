@@ -49,6 +49,18 @@ abstract class BaseScraper implements BaseScraperInterface
     }
 
     /**
+     * @param  string $method
+     * @param  string $url
+     * @return \Symfony\Component\DomCrawler\Crawler
+     */
+    protected function requestAndClearCookies(string $method, string $url): Crawler
+    {
+        $this->httpBrowser->getCookieJar()->clear();
+
+        return $this->httpBrowser->request($method, $url);
+    }
+
+    /**
      * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
      * @psalm-param string $xpath
      * @psalm-return ?string
