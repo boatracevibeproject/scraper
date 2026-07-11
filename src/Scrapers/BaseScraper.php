@@ -36,7 +36,7 @@ abstract class BaseScraper implements BaseScraperInterface
      *
      * @var int
      */
-    protected int $seconds = 1;
+    protected int $seconds = 3;
 
     /**
      * @psalm-param \Symfony\Component\BrowserKit\HttpBrowser $httpBrowser
