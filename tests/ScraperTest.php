@@ -5,177 +5,90 @@ declare(strict_types=1);
 namespace BVP\Scraper\Tests;
 
 use BVP\Scraper\Scraper;
-use BVP\Scraper\ScraperInterface;
-use PHPUnit\Framework\Attributes\DataProviderExternal;
+use BVP\Scraper\Tests\Scrapers\OddsScraperDataProvider;
+use BVP\Scraper\Tests\Scrapers\PreviewScraperDataProvider;
+use BVP\Scraper\Tests\Scrapers\ProgramScraperDataProvider;
+use BVP\Scraper\Tests\Scrapers\ResultScraperDataProvider;
 use PHPUnit\Framework\TestCase;
+use ValueError;
 
 /**
- * @psalm-import-type RaceDate from \BVP\Scraper\Tests\ScraperPsalmType
- * @psalm-import-type RaceStadiumNumber from \BVP\Scraper\Tests\ScraperPsalmType
- * @psalm-import-type RaceArguments from \BVP\Scraper\Tests\ScraperPsalmType
- * @psalm-import-type RaceExpectedByStadium from \BVP\Scraper\Tests\ScraperPsalmType
+ * Exercises the instance-based Scraper facade itself (bulk fan-out,
+ * validation). Per-field scraping correctness is already covered by
+ * tests/Scrapers/*Test.php against the underlying scraper classes directly;
+ * these tests reuse those already-verified fixtures rather than re-deriving
+ * them, wrapped in the [stadiumNumber => [raceNumber => ...]] bulk shape.
  *
  * @author shimomo
  */
 final class ScraperTest extends TestCase
 {
     /**
-     * @psalm-param RaceArguments $arguments
-     * @psalm-param RaceExpectedByStadium $expected
-     * @psalm-return void
-     *
-     * @param array $arguments
-     * @param array $expected
-     * @return void
+     * @psalm-suppress PropertyNotSetInConstructor
      */
-    #[DataProviderExternal(ScraperDataProvider::class, 'scrapeOddsesProvider')]
-    public function testScrapeOddses(array $arguments, array $expected): void
+    private Scraper $scraper;
+
+    #[\Override]
+    protected function setUp(): void
     {
-        $this->assertSame($expected, Scraper::scrapeOdds(...$arguments));
+        $this->scraper = new Scraper();
     }
 
-    /**
-     * @psalm-param RaceArguments $arguments
-     * @psalm-param RaceExpectedByStadium $expected
-     * @psalm-return void
-     *
-     * @param array $arguments
-     * @param array $expected
-     * @return void
-     */
-    #[DataProviderExternal(ScraperDataProvider::class, 'scrapePreviewsProvider')]
-    public function testScrapePreviews(array $arguments, array $expected): void
+    public function testScrapeResultBulkFansOutOverExplicitStadiumAndRace(): void
     {
-        $this->assertSame($expected, Scraper::scrapePreviews(...$arguments));
+        [$date, $stadiumNumber, $raceNumber] = ResultScraperDataProvider::scrapeProvider()[0]['arguments'];
+        $expected = ResultScraperDataProvider::scrapeProvider()[0]['expected'];
+
+        $result = $this->scraper->scrapeResultBulk($date, [$stadiumNumber], [$raceNumber]);
+
+        $this->assertSame([$stadiumNumber => [$raceNumber => $expected]], $result);
     }
 
-    /**
-     * @psalm-param RaceArguments $arguments
-     * @psalm-param RaceExpectedByStadium $expected
-     * @psalm-return void
-     *
-     * @param array $arguments
-     * @param array $expected
-     * @return void
-     */
-    #[DataProviderExternal(ScraperDataProvider::class, 'scrapeProgramsProvider')]
-    public function testScrapePrograms(array $arguments, array $expected): void
+    public function testScrapeProgramBulkFansOutOverExplicitStadiumAndRace(): void
     {
-        $this->assertSame($expected, Scraper::scrapePrograms(...$arguments));
+        [$date, $stadiumNumber, $raceNumber] = ProgramScraperDataProvider::scrapeProvider()[0]['arguments'];
+        $expected = ProgramScraperDataProvider::scrapeProvider()[0]['expected'];
+
+        $result = $this->scraper->scrapeProgramBulk($date, [$stadiumNumber], [$raceNumber]);
+
+        $this->assertSame([$stadiumNumber => [$raceNumber => $expected]], $result);
     }
 
-    /**
-     * @psalm-param RaceArguments $arguments
-     * @psalm-param RaceExpectedByStadium $expected
-     * @psalm-return void
-     *
-     * @param array $arguments
-     * @param array $expected
-     * @return void
-     */
-    #[DataProviderExternal(ScraperDataProvider::class, 'scrapeResultsProvider')]
-    public function testScrapeResults(array $arguments, array $expected): void
+    public function testScrapePreviewBulkFansOutOverExplicitStadiumAndRace(): void
     {
-        $this->assertSame($expected, Scraper::scrapeResults(...$arguments));
+        [$date, $stadiumNumber, $raceNumber] = PreviewScraperDataProvider::scrapeProvider()[0]['arguments'];
+        $expected = PreviewScraperDataProvider::scrapeProvider()[0]['expected'];
+
+        $result = $this->scraper->scrapePreviewBulk($date, [$stadiumNumber], [$raceNumber]);
+
+        $this->assertSame([$stadiumNumber => [$raceNumber => $expected]], $result);
     }
 
-    /**
-     * @psalm-param array{RaceDate} $arguments
-     * @psalm-param array<RaceStadiumNumber, non-empty-string> $expected
-     * @psalm-return void
-     *
-     * @param array $arguments
-     * @param array $expected
-     * @return void
-     */
-    #[DataProviderExternal(ScraperDataProvider::class, 'scrapeStadiumsProvider')]
-    public function testScrapeStadiums(array $arguments, array $expected): void
+    public function testScrapeOddsBulkFansOutOverExplicitStadiumAndRace(): void
     {
-        $this->assertSame($expected, Scraper::scrapeStadiums(...$arguments));
+        [$date, $stadiumNumber, $raceNumber] = OddsScraperDataProvider::scrapeProvider()[0]['arguments'];
+        $expected = OddsScraperDataProvider::scrapeProvider()[0]['expected'];
+
+        $result = $this->scraper->scrapeOddsBulk($date, [$stadiumNumber], [$raceNumber]);
+
+        $this->assertSame([$stadiumNumber => [$raceNumber => $expected]], $result);
     }
 
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
-    public function testThrowsExceptionWhenMethodDoesNotExist(): void
+    public function testScrapeResultRejectsInvalidStadiumNumber(): void
     {
-        $this->expectException(\BadMethodCallException::class);
-        $this->expectExceptionMessage(
-            "BVP\Scraper\ScraperDispatcher::resolveScraperClass() - " .
-            "Scraper name for `ghost` is invalid."
-        );
+        $this->expectException(ValueError::class);
+        $this->expectExceptionMessage('$stadiumNumber must be between 1 and 24, 0 given.');
 
-        /** @psalm-suppress UndefinedMagicMethod */
-        Scraper::ghost('2017-03-31', 24, 1);
+        /** @psalm-suppress InvalidArgument */
+        $this->scraper->scrapeResult('2017-03-31', 0, 1);
     }
 
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
-    public function testThrowsExceptionWhenRaceStadiumNumberIsInvalid(): void
+    public function testScrapeResultRejectsInvalidRaceNumber(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage(
-            "BVP\Scraper\ScraperDispatcher::getRaceStadiumNumbers() - " .
-            "Race stadium number for `#` is invalid."
-        );
+        $this->expectException(ValueError::class);
+        $this->expectExceptionMessage('$raceNumber must be between 1 and 12, 0 given.');
 
-        Scraper::scrapePrograms('2017-03-31', '#', 1);
-    }
-
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
-    public function testThrowsExceptionWhenRaceNumberIsInvalid(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage(
-            "BVP\Scraper\ScraperDispatcher::getRaceNumbers() - " .
-            "Race number for `#` is invalid."
-        );
-
-        Scraper::scrapePrograms('2017-03-31', 24, '#');
-    }
-
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
-    public function testGetInstance(): void
-    {
-        Scraper::resetInstance();
-        $this->assertInstanceOf(ScraperInterface::class, Scraper::getInstance());
-    }
-
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
-    public function testCreateInstance(): void
-    {
-        Scraper::resetInstance();
-        $this->assertInstanceOf(ScraperInterface::class, Scraper::createInstance());
-    }
-
-    /**
-     * @psalm-return void
-     *
-     * @return void
-     */
-    public function testResetInstance(): void
-    {
-        Scraper::resetInstance();
-        $instance1 = Scraper::getInstance();
-        Scraper::resetInstance();
-        $instance2 = Scraper::getInstance();
-        $this->assertNotSame($instance1, $instance2);
+        /** @psalm-suppress InvalidArgument */
+        $this->scraper->scrapeResult('2017-03-31', 24, 0);
     }
 }

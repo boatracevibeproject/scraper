@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BVP\Scraper\Tests\Scrapers;
 
+use BVP\Scraper\RateLimiting\ThrottleRateLimiter;
 use BVP\Scraper\Scrapers\OddsScraper;
 use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\TestCase;
@@ -34,7 +35,8 @@ final class OddsScraperTest extends TestCase
     protected function setUp(): void
     {
         $this->scraper = new OddsScraper(
-            new HttpBrowser()
+            new HttpBrowser(),
+            new ThrottleRateLimiter(1.0),
         );
     }
 

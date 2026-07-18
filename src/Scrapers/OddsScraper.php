@@ -4,1022 +4,380 @@ declare(strict_types=1);
 
 namespace BVP\Scraper\Scrapers;
 
+use BVP\Scraper\Contracts\Scraper;
+use BVP\Scraper\Filters\Filter;
+use BVP\Scraper\Filters\OddsFilter;
+use BVP\Scraper\RateLimiting\RateLimiterInterface;
 use Carbon\CarbonInterface;
+use Symfony\Component\BrowserKit\HttpBrowser;
 use Symfony\Component\DomCrawler\Crawler;
 
 /**
+ * Odds are spread across five distinct boatrace.jp pages (trifecta, trio,
+ * exacta+quinella together, quinella-place, win+place together), so a full
+ * scrape() issues five HTTP requests. Unlike the other scrapers, this one
+ * needs its own rate limiter reference to pace those five requests against
+ * each other, not just against whatever scrape*() call preceded it.
+ *
  * @author shimomo
  */
-final class OddsScraper extends BaseScraper implements OddsScraperInterface
+final class OddsScraper extends BaseScraper implements Scraper
 {
     /**
-     * @psalm-var non-empty-string
-     *
-     * @var string
+     * @var non-empty-string
      */
     private string $baseXPath = 'descendant-or-self::body/main/div/div/div';
 
     /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return array<non-empty-string, mixed>
-     *
+     * @var int<0, 1>
+     */
+    private int $baseLevel = 0;
+
+    /**
+     * @param \Symfony\Component\BrowserKit\HttpBrowser $httpBrowser
+     * @param \BVP\Scraper\RateLimiting\RateLimiterInterface $rateLimiter
+     */
+    public function __construct(HttpBrowser $httpBrowser, private readonly RateLimiterInterface $rateLimiter)
+    {
+        parent::__construct($httpBrowser);
+    }
+
+    /**
      * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return array
+     * @param int<1, 24> $stadiumNumber
+     * @param int<1, 12> $raceNumber
+     * @return array<non-empty-string, mixed>
      */
     #[\Override]
-    public function scrape(CarbonInterface $date, int $stadiumNumber, int $number): array
+    public function scrape(CarbonInterface $date, int $stadiumNumber, int $raceNumber): array
     {
         $response = [];
 
-        $response += $this->scrapeSingle($date, $stadiumNumber, $number);
-        $response += $this->scrapePair($date, $stadiumNumber, $number);
-        $response += $this->scrapeTriple($date, $stadiumNumber, $number);
+        $response += $this->scrapeTrifecta($date, $stadiumNumber, $raceNumber);
+        $this->rateLimiter->throttle();
+        $response += $this->scrapeTrio($date, $stadiumNumber, $raceNumber);
+        $this->rateLimiter->throttle();
+        $response += $this->scrapeExactaAndQuinella($date, $stadiumNumber, $raceNumber);
+        $this->rateLimiter->throttle();
+        $response += $this->scrapeQuinellaPlace($date, $stadiumNumber, $raceNumber);
+        $this->rateLimiter->throttle();
+        $response += $this->scrapeWinAndPlace($date, $stadiumNumber, $raceNumber);
 
         return $response;
     }
 
     /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return array<non-empty-string, mixed>
-     *
      * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return array
+     * @param int<1, 24> $stadiumNumber
+     * @param int<1, 12> $raceNumber
+     * @return array<non-empty-string, mixed>
      */
-    #[\Override]
-    public function scrapeSingle(CarbonInterface $date, int $stadiumNumber, int $number): array
-    {
-        $response = [];
-
-        $response['date'] = $date->format('Y-m-d');
-        $response['stadium_number'] = $stadiumNumber;
-        $response['number'] = $number;
-
-        $scraper = $this->fetchWinOdds($date, $stadiumNumber, $number);
-        $response += $this->filterWinOdds($scraper);
-        $response += $this->filterPlaceOdds($scraper);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return array
-     */
-    #[\Override]
-    public function scrapePair(CarbonInterface $date, int $stadiumNumber, int $number): array
-    {
-        $response = [];
-
-        $response['date'] = $date->format('Y-m-d');
-        $response['stadium_number'] = $stadiumNumber;
-        $response['number'] = $number;
-
-        $scraper = $this->fetchExactaOdds($date, $stadiumNumber, $number);
-        $response += $this->filterExactaOdds($scraper);
-        $response += $this->filterquinellaOdds($scraper);
-
-        $scraper = $this->fetchQuinellaPlaceOdds($date, $stadiumNumber, $number);
-        $response += $this->filterQuinellaPlaceOdds($scraper);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return array
-     */
-    #[\Override]
-    public function scrapeTriple(CarbonInterface $date, int $stadiumNumber, int $number): array
-    {
-        $response = [];
-
-        $response['date'] = $date->format('Y-m-d');
-        $response['stadium_number'] = $stadiumNumber;
-        $response['number'] = $number;
-
-        $scraper = $this->fetchTrifectaOdds($date, $stadiumNumber, $number);
-        $response += $this->filterTrifectaOdds($scraper);
-
-        $scraper = $this->fetchTrioOdds($date, $stadiumNumber, $number);
-        $response += $this->filterTrioOdds($scraper);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return array
-     */
-    #[\Override]
-    public function scrapeWin(CarbonInterface $date, int $stadiumNumber, int $number): array
-    {
-        $response = [];
-
-        $response['date'] = $date->format('Y-m-d');
-        $response['stadium_number'] = $stadiumNumber;
-        $response['number'] = $number;
-
-        $scraper = $this->fetchWinOdds($date, $stadiumNumber, $number);
-        $response += $this->filterWinOdds($scraper);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return array
-     */
-    #[\Override]
-    public function scrapePlace(CarbonInterface $date, int $stadiumNumber, int $number): array
-    {
-        $response = [];
-
-        $response['date'] = $date->format('Y-m-d');
-        $response['stadium_number'] = $stadiumNumber;
-        $response['number'] = $number;
-
-        $scraper = $this->fetchPlaceOdds($date, $stadiumNumber, $number);
-        $response += $this->filterPlaceOdds($scraper);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return array
-     */
-    #[\Override]
-    public function scrapeExacta(CarbonInterface $date, int $stadiumNumber, int $number): array
-    {
-        $response = [];
-
-        $response['date'] = $date->format('Y-m-d');
-        $response['stadium_number'] = $stadiumNumber;
-        $response['number'] = $number;
-
-        $scraper = $this->fetchExactaOdds($date, $stadiumNumber, $number);
-        $response += $this->filterExactaOdds($scraper);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return array
-     */
-    #[\Override]
-    public function scrapeQuinella(CarbonInterface $date, int $stadiumNumber, int $number): array
-    {
-        $response = [];
-
-        $response['date'] = $date->format('Y-m-d');
-        $response['stadium_number'] = $stadiumNumber;
-        $response['number'] = $number;
-
-        $scraper = $this->fetchQuinellaOdds($date, $stadiumNumber, $number);
-        $response += $this->filterQuinellaOdds($scraper);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return array
-     */
-    #[\Override]
-    public function scrapeQuinellaPlace(CarbonInterface $date, int $stadiumNumber, int $number): array
-    {
-        $response = [];
-
-        $response['date'] = $date->format('Y-m-d');
-        $response['stadium_number'] = $stadiumNumber;
-        $response['number'] = $number;
-
-        $scraper = $this->fetchQuinellaPlaceOdds($date, $stadiumNumber, $number);
-        $response += $this->filterQuinellaPlaceOdds($scraper);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return array
-     */
-    #[\Override]
-    public function scrapeTrifecta(CarbonInterface $date, int $stadiumNumber, int $number): array
-    {
-        $response = [];
-
-        $response['date'] = $date->format('Y-m-d');
-        $response['stadium_number'] = $stadiumNumber;
-        $response['number'] = $number;
-
-        $scraper = $this->fetchTrifectaOdds($date, $stadiumNumber, $number);
-        $response += $this->filterTrifectaOdds($scraper);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return array
-     */
-    #[\Override]
-    public function scrapeTrio(CarbonInterface $date, int $stadiumNumber, int $number): array
-    {
-        $response = [];
-
-        $response['date'] = $date->format('Y-m-d');
-        $response['stadium_number'] = $stadiumNumber;
-        $response['number'] = $number;
-
-        $scraper = $this->fetchTrioOdds($date, $stadiumNumber, $number);
-        $response += $this->filterTrioOdds($scraper);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return \Symfony\Component\DomCrawler\Crawler
-     *
-     * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return \Symfony\Component\DomCrawler\Crawler
-     */
-    private function fetchWinOdds(CarbonInterface $date, int $stadiumNumber, int $number): Crawler
-    {
-        $scraperFormat = '%s/owpc/pc/race/oddstf?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
-        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
-        sleep($this->seconds);
-
-        $levelFormat = '%s/div[2]/div[3]/ul/li';
-        $levelXPath = sprintf($levelFormat, $this->baseXPath);
-
-        $this->baseLevel = 0;
-        if ($this->filterXPath($scraper, $levelXPath) !== null) {
-            $this->baseLevel = 1;
-        }
-
-        return $scraper;
-    }
-
-    /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return \Symfony\Component\DomCrawler\Crawler
-     *
-     * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return \Symfony\Component\DomCrawler\Crawler
-     */
-    private function fetchPlaceOdds(CarbonInterface $date, int $stadiumNumber, int $number): Crawler
-    {
-        return $this->fetchWinOdds($date, $stadiumNumber, $number);
-    }
-
-    /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return \Symfony\Component\DomCrawler\Crawler
-     *
-     * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return \Symfony\Component\DomCrawler\Crawler
-     */
-    private function fetchExactaOdds(CarbonInterface $date, int $stadiumNumber, int $number): Crawler
-    {
-        $scraperFormat = '%s/owpc/pc/race/odds2tf?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
-        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
-        sleep($this->seconds);
-
-        $levelFormat = '%s/div[2]/div[3]/ul/li';
-        $levelXPath = sprintf($levelFormat, $this->baseXPath);
-
-        $this->baseLevel = 0;
-        if ($this->filterXPath($scraper, $levelXPath) !== null) {
-            $this->baseLevel = 1;
-        }
-
-        return $scraper;
-    }
-
-    /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return \Symfony\Component\DomCrawler\Crawler
-     *
-     * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return \Symfony\Component\DomCrawler\Crawler
-     */
-    private function fetchQuinellaOdds(CarbonInterface $date, int $stadiumNumber, int $number): Crawler
-    {
-        return $this->fetchExactaOdds($date, $stadiumNumber, $number);
-    }
-
-    /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return \Symfony\Component\DomCrawler\Crawler
-     *
-     * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return \Symfony\Component\DomCrawler\Crawler
-     */
-    private function fetchQuinellaPlaceOdds(CarbonInterface $date, int $stadiumNumber, int $number): Crawler
-    {
-        $scraperFormat = '%s/owpc/pc/race/oddsk?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
-        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
-        sleep($this->seconds);
-
-        $levelFormat = '%s/div[2]/div[3]/ul/li';
-        $levelXPath = sprintf($levelFormat, $this->baseXPath);
-
-        $this->baseLevel = 0;
-        if ($this->filterXPath($scraper, $levelXPath) !== null) {
-            $this->baseLevel = 1;
-        }
-
-        return $scraper;
-    }
-
-    /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return \Symfony\Component\DomCrawler\Crawler
-     *
-     * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return \Symfony\Component\DomCrawler\Crawler
-     */
-    private function fetchTrifectaOdds(CarbonInterface $date, int $stadiumNumber, int $number): Crawler
+    public function scrapeTrifecta(CarbonInterface $date, int $stadiumNumber, int $raceNumber): array
     {
         $scraperFormat = '%s/owpc/pc/race/odds3t?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $raceNumber);
         $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
-        sleep($this->seconds);
 
-        $levelFormat = '%s/div[2]/div[3]/ul/li';
-        $levelXPath = sprintf($levelFormat, $this->baseXPath);
+        $this->resolveBaseLevel($scraper);
 
-        $this->baseLevel = 0;
-        if ($this->filterXPath($scraper, $levelXPath) !== null) {
-            $this->baseLevel = 1;
+        $response = [];
+
+        $response['date'] = $date->format('Y-m-d');
+        $response['stadium_number'] = $stadiumNumber;
+        $response['race_number'] = $raceNumber;
+
+        // [first, second, third, row, column] for all 120 permutations of 1-6 taken 3 at a time.
+        $trifectaTemplates = [
+            [1, 2, 3, 1, 3], [1, 2, 4, 2, 2], [1, 2, 5, 3, 2], [1, 2, 6, 4, 2],
+            [1, 3, 2, 5, 3], [1, 3, 4, 6, 2], [1, 3, 5, 7, 2], [1, 3, 6, 8, 2],
+            [1, 4, 2, 9, 3], [1, 4, 3, 10, 2], [1, 4, 5, 11, 2], [1, 4, 6, 12, 2],
+            [1, 5, 2, 13, 3], [1, 5, 3, 14, 2], [1, 5, 4, 15, 2], [1, 5, 6, 16, 2],
+            [1, 6, 2, 17, 3], [1, 6, 3, 18, 2], [1, 6, 4, 19, 2], [1, 6, 5, 20, 2],
+            [2, 1, 3, 1, 6], [2, 1, 4, 2, 4], [2, 1, 5, 3, 4], [2, 1, 6, 4, 4],
+            [2, 3, 1, 5, 6], [2, 3, 4, 6, 4], [2, 3, 5, 7, 4], [2, 3, 6, 8, 4],
+            [2, 4, 1, 9, 6], [2, 4, 3, 10, 4], [2, 4, 5, 11, 4], [2, 4, 6, 12, 4],
+            [2, 5, 1, 13, 6], [2, 5, 3, 14, 4], [2, 5, 4, 15, 4], [2, 5, 6, 16, 4],
+            [2, 6, 1, 17, 6], [2, 6, 3, 18, 4], [2, 6, 4, 19, 4], [2, 6, 5, 20, 4],
+            [3, 1, 2, 1, 9], [3, 1, 4, 2, 6], [3, 1, 5, 3, 6], [3, 1, 6, 4, 6],
+            [3, 2, 1, 5, 9], [3, 2, 4, 6, 6], [3, 2, 5, 7, 6], [3, 2, 6, 8, 6],
+            [3, 4, 1, 9, 9], [3, 4, 2, 10, 6], [3, 4, 5, 11, 6], [3, 4, 6, 12, 6],
+            [3, 5, 1, 13, 9], [3, 5, 2, 14, 6], [3, 5, 4, 15, 6], [3, 5, 6, 16, 6],
+            [3, 6, 1, 17, 9], [3, 6, 2, 18, 6], [3, 6, 4, 19, 6], [3, 6, 5, 20, 6],
+            [4, 1, 2, 1, 12], [4, 1, 3, 2, 8], [4, 1, 5, 3, 8], [4, 1, 6, 4, 8],
+            [4, 2, 1, 5, 12], [4, 2, 3, 6, 8], [4, 2, 5, 7, 8], [4, 2, 6, 8, 8],
+            [4, 3, 1, 9, 12], [4, 3, 2, 10, 8], [4, 3, 5, 11, 8], [4, 3, 6, 12, 8],
+            [4, 5, 1, 13, 12], [4, 5, 2, 14, 8], [4, 5, 3, 15, 8], [4, 5, 6, 16, 8],
+            [4, 6, 1, 17, 12], [4, 6, 2, 18, 8], [4, 6, 3, 19, 8], [4, 6, 5, 20, 8],
+            [5, 1, 2, 1, 15], [5, 1, 3, 2, 10], [5, 1, 4, 3, 10], [5, 1, 6, 4, 10],
+            [5, 2, 1, 5, 15], [5, 2, 3, 6, 10], [5, 2, 4, 7, 10], [5, 2, 6, 8, 10],
+            [5, 3, 1, 9, 15], [5, 3, 2, 10, 10], [5, 3, 4, 11, 10], [5, 3, 6, 12, 10],
+            [5, 4, 1, 13, 15], [5, 4, 2, 14, 10], [5, 4, 3, 15, 10], [5, 4, 6, 16, 10],
+            [5, 6, 1, 17, 15], [5, 6, 2, 18, 10], [5, 6, 3, 19, 10], [5, 6, 4, 20, 10],
+            [6, 1, 2, 1, 18], [6, 1, 3, 2, 12], [6, 1, 4, 3, 12], [6, 1, 5, 4, 12],
+            [6, 2, 1, 5, 18], [6, 2, 3, 6, 12], [6, 2, 4, 7, 12], [6, 2, 5, 8, 12],
+            [6, 3, 1, 9, 18], [6, 3, 2, 10, 12], [6, 3, 4, 11, 12], [6, 3, 5, 12, 12],
+            [6, 4, 1, 13, 18], [6, 4, 2, 14, 12], [6, 4, 3, 15, 12], [6, 4, 5, 16, 12],
+            [6, 5, 1, 17, 18], [6, 5, 2, 18, 12], [6, 5, 3, 19, 12], [6, 5, 4, 20, 12],
+        ];
+
+        foreach ($trifectaTemplates as [$first, $second, $third, $row, $column]) {
+            $xPathFormat = '%s/div[2]/div[%d]/table/tbody/tr[%d]/td[%d]';
+            $xPath = sprintf($xPathFormat, $this->baseXPath, $this->baseLevel + 7, $row, $column);
+            $response['trifecta'][$first][$second][$third] = OddsFilter::byXPath($scraper, $xPath);
         }
 
-        return $scraper;
+        return $response;
     }
 
     /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return \Symfony\Component\DomCrawler\Crawler
-     *
      * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return \Symfony\Component\DomCrawler\Crawler
+     * @param int<1, 24> $stadiumNumber
+     * @param int<1, 12> $raceNumber
+     * @return array<non-empty-string, mixed>
      */
-    private function fetchTrioOdds(CarbonInterface $date, int $stadiumNumber, int $number): Crawler
+    public function scrapeTrio(CarbonInterface $date, int $stadiumNumber, int $raceNumber): array
     {
         $scraperFormat = '%s/owpc/pc/race/odds3f?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $raceNumber);
         $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
-        sleep($this->seconds);
 
+        $this->resolveBaseLevel($scraper);
+
+        $response = [];
+
+        $response['date'] = $date->format('Y-m-d');
+        $response['stadium_number'] = $stadiumNumber;
+        $response['race_number'] = $raceNumber;
+
+        $trioXPath = sprintf('%s/div[2]/div[%d]/table/tbody/tr[1]/td[3]', $this->baseXPath, $this->baseLevel + 7);
+        $response['trio'][1][2][3] = OddsFilter::byXPath($scraper, $trioXPath);
+
+        $trioTemplates = [
+            [1, 2, 4, '%s/div[2]/div[%d]/table/tbody/tr[2]/td[2]'],
+            [1, 2, 5, '%s/div[2]/div[%d]/table/tbody/tr[3]/td[2]'],
+            [1, 2, 6, '%s/div[2]/div[%d]/table/tbody/tr[4]/td[2]'],
+            [1, 3, 4, '%s/div[2]/div[%d]/table/tbody/tr[5]/td[3]'],
+            [1, 3, 5, '%s/div[2]/div[%d]/table/tbody/tr[6]/td[2]'],
+            [1, 3, 6, '%s/div[2]/div[%d]/table/tbody/tr[7]/td[2]'],
+            [1, 4, 5, '%s/div[2]/div[%d]/table/tbody/tr[8]/td[3]'],
+            [1, 4, 6, '%s/div[2]/div[%d]/table/tbody/tr[9]/td[2]'],
+            [1, 5, 6, '%s/div[2]/div[%d]/table/tbody/tr[10]/td[3]'],
+            [2, 3, 4, '%s/div[2]/div[%d]/table/tbody/tr[5]/td[6]'],
+            [2, 3, 5, '%s/div[2]/div[%d]/table/tbody/tr[6]/td[4]'],
+            [2, 3, 6, '%s/div[2]/div[%d]/table/tbody/tr[7]/td[4]'],
+            [2, 4, 5, '%s/div[2]/div[%d]/table/tbody/tr[8]/td[6]'],
+            [2, 4, 6, '%s/div[2]/div[%d]/table/tbody/tr[9]/td[4]'],
+            [2, 5, 6, '%s/div[2]/div[%d]/table/tbody/tr[10]/td[6]'],
+            [3, 4, 5, '%s/div[2]/div[%d]/table/tbody/tr[8]/td[9]'],
+            [3, 4, 6, '%s/div[2]/div[%d]/table/tbody/tr[9]/td[6]'],
+            [3, 5, 6, '%s/div[2]/div[%d]/table/tbody/tr[10]/td[9]'],
+            [4, 5, 6, '%s/div[2]/div[%d]/table/tbody/tr[10]/td[12]'],
+        ];
+
+        foreach ($trioTemplates as [$first, $second, $third, $format]) {
+            $xPath = sprintf($format, $this->baseXPath, $this->baseLevel + 7);
+            $response['trio'][$first][$second][$third] = OddsFilter::byXPath($scraper, $xPath);
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param \Carbon\CarbonInterface $date
+     * @param int<1, 24> $stadiumNumber
+     * @param int<1, 12> $raceNumber
+     * @return array<non-empty-string, mixed>
+     */
+    public function scrapeExacta(CarbonInterface $date, int $stadiumNumber, int $raceNumber): array
+    {
+        return $this->scrapeExactaAndQuinella($date, $stadiumNumber, $raceNumber);
+    }
+
+    /**
+     * @param \Carbon\CarbonInterface $date
+     * @param int<1, 24> $stadiumNumber
+     * @param int<1, 12> $raceNumber
+     * @return array<non-empty-string, mixed>
+     */
+    public function scrapeQuinella(CarbonInterface $date, int $stadiumNumber, int $raceNumber): array
+    {
+        return $this->scrapeExactaAndQuinella($date, $stadiumNumber, $raceNumber);
+    }
+
+    /**
+     * @param \Carbon\CarbonInterface $date
+     * @param int<1, 24> $stadiumNumber
+     * @param int<1, 12> $raceNumber
+     * @return array<non-empty-string, mixed>
+     */
+    public function scrapeExactaAndQuinella(CarbonInterface $date, int $stadiumNumber, int $raceNumber): array
+    {
+        $scraperFormat = '%s/owpc/pc/race/odds2tf?hd=%s&jcd=%02d&rno=%d';
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $raceNumber);
+        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
+
+        $this->resolveBaseLevel($scraper);
+
+        $response = [];
+
+        $response['date'] = $date->format('Y-m-d');
+        $response['stadium_number'] = $stadiumNumber;
+        $response['race_number'] = $raceNumber;
+
+        foreach (range(1, 6) as $first) {
+            foreach (range(1, 6) as $second) {
+                if ($first === $second) {
+                    continue;
+                }
+
+                $row = $first < $second ? $second - 1 : $second;
+                $column = $first * 2;
+
+                $exactaFormat = '%s/div[2]/div[%d]/table/tbody/tr[%d]/td[%d]';
+                $exactaXPath = sprintf($exactaFormat, $this->baseXPath, $this->baseLevel + 7, $row, $column);
+                $response['exacta'][$first][$second] = OddsFilter::byXPath($scraper, $exactaXPath);
+            }
+        }
+
+        $quinellaTemplates = [
+            [1, 2, '%s/div[2]/div[%d]/table/tbody/tr[1]/td[2]'],
+            [1, 3, '%s/div[2]/div[%d]/table/tbody/tr[2]/td[2]'],
+            [1, 4, '%s/div[2]/div[%d]/table/tbody/tr[3]/td[2]'],
+            [1, 5, '%s/div[2]/div[%d]/table/tbody/tr[4]/td[2]'],
+            [1, 6, '%s/div[2]/div[%d]/table/tbody/tr[5]/td[2]'],
+            [2, 3, '%s/div[2]/div[%d]/table/tbody/tr[2]/td[4]'],
+            [2, 4, '%s/div[2]/div[%d]/table/tbody/tr[3]/td[4]'],
+            [2, 5, '%s/div[2]/div[%d]/table/tbody/tr[4]/td[4]'],
+            [2, 6, '%s/div[2]/div[%d]/table/tbody/tr[5]/td[4]'],
+            [3, 4, '%s/div[2]/div[%d]/table/tbody/tr[3]/td[6]'],
+            [3, 5, '%s/div[2]/div[%d]/table/tbody/tr[4]/td[6]'],
+            [3, 6, '%s/div[2]/div[%d]/table/tbody/tr[5]/td[6]'],
+            [4, 5, '%s/div[2]/div[%d]/table/tbody/tr[4]/td[8]'],
+            [4, 6, '%s/div[2]/div[%d]/table/tbody/tr[5]/td[8]'],
+            [5, 6, '%s/div[2]/div[%d]/table/tbody/tr[5]/td[10]'],
+        ];
+
+        foreach ($quinellaTemplates as [$first, $second, $format]) {
+            $xPath = sprintf($format, $this->baseXPath, $this->baseLevel + 9);
+            $response['quinella'][$first][$second] = OddsFilter::byXPath($scraper, $xPath);
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param \Carbon\CarbonInterface $date
+     * @param int<1, 24> $stadiumNumber
+     * @param int<1, 12> $raceNumber
+     * @return array<non-empty-string, mixed>
+     */
+    public function scrapeQuinellaPlace(CarbonInterface $date, int $stadiumNumber, int $raceNumber): array
+    {
+        $scraperFormat = '%s/owpc/pc/race/oddsk?hd=%s&jcd=%02d&rno=%d';
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $raceNumber);
+        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
+
+        $this->resolveBaseLevel($scraper);
+
+        $response = [];
+
+        $response['date'] = $date->format('Y-m-d');
+        $response['stadium_number'] = $stadiumNumber;
+        $response['race_number'] = $raceNumber;
+
+        $quinellaPlaceTemplates = [
+            [1, 2, '%s/div[2]/div[%d]/table/tbody/tr[1]/td[2]'],
+            [1, 3, '%s/div[2]/div[%d]/table/tbody/tr[2]/td[2]'],
+            [1, 4, '%s/div[2]/div[%d]/table/tbody/tr[3]/td[2]'],
+            [1, 5, '%s/div[2]/div[%d]/table/tbody/tr[4]/td[2]'],
+            [1, 6, '%s/div[2]/div[%d]/table/tbody/tr[5]/td[2]'],
+            [2, 3, '%s/div[2]/div[%d]/table/tbody/tr[2]/td[4]'],
+            [2, 4, '%s/div[2]/div[%d]/table/tbody/tr[3]/td[4]'],
+            [2, 5, '%s/div[2]/div[%d]/table/tbody/tr[4]/td[4]'],
+            [2, 6, '%s/div[2]/div[%d]/table/tbody/tr[5]/td[4]'],
+            [3, 4, '%s/div[2]/div[%d]/table/tbody/tr[3]/td[6]'],
+            [3, 5, '%s/div[2]/div[%d]/table/tbody/tr[4]/td[6]'],
+            [3, 6, '%s/div[2]/div[%d]/table/tbody/tr[5]/td[6]'],
+            [4, 5, '%s/div[2]/div[%d]/table/tbody/tr[4]/td[8]'],
+            [4, 6, '%s/div[2]/div[%d]/table/tbody/tr[5]/td[8]'],
+            [5, 6, '%s/div[2]/div[%d]/table/tbody/tr[5]/td[10]'],
+        ];
+
+        foreach ($quinellaPlaceTemplates as [$first, $second, $format]) {
+            $xPath = sprintf($format, $this->baseXPath, $this->baseLevel + 7);
+            $response['quinella_place'][$first][$second] = OddsFilter::byXPathAsRange($scraper, $xPath);
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param \Carbon\CarbonInterface $date
+     * @param int<1, 24> $stadiumNumber
+     * @param int<1, 12> $raceNumber
+     * @return array<non-empty-string, mixed>
+     */
+    public function scrapeWin(CarbonInterface $date, int $stadiumNumber, int $raceNumber): array
+    {
+        return $this->scrapeWinAndPlace($date, $stadiumNumber, $raceNumber);
+    }
+
+    /**
+     * @param \Carbon\CarbonInterface $date
+     * @param int<1, 24> $stadiumNumber
+     * @param int<1, 12> $raceNumber
+     * @return array<non-empty-string, mixed>
+     */
+    public function scrapePlace(CarbonInterface $date, int $stadiumNumber, int $raceNumber): array
+    {
+        return $this->scrapeWinAndPlace($date, $stadiumNumber, $raceNumber);
+    }
+
+    /**
+     * @param \Carbon\CarbonInterface $date
+     * @param int<1, 24> $stadiumNumber
+     * @param int<1, 12> $raceNumber
+     * @return array<non-empty-string, mixed>
+     */
+    public function scrapeWinAndPlace(CarbonInterface $date, int $stadiumNumber, int $raceNumber): array
+    {
+        $scraperFormat = '%s/owpc/pc/race/oddstf?hd=%s&jcd=%02d&rno=%d';
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $raceNumber);
+        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
+
+        $this->resolveBaseLevel($scraper);
+
+        $response = [];
+
+        $response['date'] = $date->format('Y-m-d');
+        $response['stadium_number'] = $stadiumNumber;
+        $response['race_number'] = $raceNumber;
+
+        foreach (range(1, 6) as $boatNumber) {
+            $winFormat = '%s/div[2]/div[%d]/div[1]/div[2]/table/tbody[%d]/tr/td[3]';
+            $winXPath = sprintf($winFormat, $this->baseXPath, $this->baseLevel + 6, $boatNumber);
+            $response['win'][$boatNumber] = OddsFilter::byXPath($scraper, $winXPath);
+
+            $placeFormat = '%s/div[2]/div[%d]/div[2]/div[2]/table/tbody[%d]/tr/td[3]';
+            $placeXPath = sprintf($placeFormat, $this->baseXPath, $this->baseLevel + 6, $boatNumber);
+            $response['place'][$boatNumber] = OddsFilter::byXPathAsRange($scraper, $placeXPath);
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @return void
+     */
+    private function resolveBaseLevel(Crawler $scraper): void
+    {
         $levelFormat = '%s/div[2]/div[3]/ul/li';
         $levelXPath = sprintf($levelFormat, $this->baseXPath);
 
         $this->baseLevel = 0;
-        if ($this->filterXPath($scraper, $levelXPath) !== null) {
+        if (Filter::byXPath($scraper, $levelXPath) !== null) {
             $this->baseLevel = 1;
         }
-
-        return $scraper;
-    }
-
-    /**
-     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @return array
-     */
-    private function filterWinOdds(Crawler $scraper): array
-    {
-        $response = [];
-
-        $win1XPath = sprintf('%s/div[2]/div[%s]/div[1]/div[2]/table/tbody[1]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
-        $win2XPath = sprintf('%s/div[2]/div[%s]/div[1]/div[2]/table/tbody[2]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
-        $win3XPath = sprintf('%s/div[2]/div[%s]/div[1]/div[2]/table/tbody[3]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
-        $win4XPath = sprintf('%s/div[2]/div[%s]/div[1]/div[2]/table/tbody[4]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
-        $win5XPath = sprintf('%s/div[2]/div[%s]/div[1]/div[2]/table/tbody[5]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
-        $win6XPath = sprintf('%s/div[2]/div[%s]/div[1]/div[2]/table/tbody[6]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
-
-        $response['win_odds'][1] = $this->filterXPathForOdds($scraper, $win1XPath);
-        $response['win_odds'][2] = $this->filterXPathForOdds($scraper, $win2XPath);
-        $response['win_odds'][3] = $this->filterXPathForOdds($scraper, $win3XPath);
-        $response['win_odds'][4] = $this->filterXPathForOdds($scraper, $win4XPath);
-        $response['win_odds'][5] = $this->filterXPathForOdds($scraper, $win5XPath);
-        $response['win_odds'][6] = $this->filterXPathForOdds($scraper, $win6XPath);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @return array
-     */
-    private function filterPlaceOdds(Crawler $scraper): array
-    {
-        $response = [];
-
-        $place1XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[1]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
-        $place2XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[2]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
-        $place3XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[3]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
-        $place4XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[4]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
-        $place5XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[5]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
-        $place6XPath = sprintf('%s/div[2]/div[%s]/div[2]/div[2]/table/tbody[6]/tr/td[3]', $this->baseXPath, $this->baseLevel + 6);
-
-        $response['place_odds'][1] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $place1XPath);
-        $response['place_odds'][2] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $place2XPath);
-        $response['place_odds'][3] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $place3XPath);
-        $response['place_odds'][4] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $place4XPath);
-        $response['place_odds'][5] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $place5XPath);
-        $response['place_odds'][6] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $place6XPath);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @return array
-     */
-    private function filterExactaOdds(Crawler $scraper): array
-    {
-        $response = [];
-
-        $exacta12XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta13XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta14XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta15XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta16XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta21XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta23XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta24XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta25XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta26XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta31XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta32XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta34XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta35XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta36XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta41XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta42XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta43XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta45XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta46XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta51XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta52XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta53XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta54XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta56XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta61XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta62XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta63XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta64XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $exacta65XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-
-        $response['exacta_odds'][1][2] = $this->filterXPathForOdds($scraper, $exacta12XPath);
-        $response['exacta_odds'][1][3] = $this->filterXPathForOdds($scraper, $exacta13XPath);
-        $response['exacta_odds'][1][4] = $this->filterXPathForOdds($scraper, $exacta14XPath);
-        $response['exacta_odds'][1][5] = $this->filterXPathForOdds($scraper, $exacta15XPath);
-        $response['exacta_odds'][1][6] = $this->filterXPathForOdds($scraper, $exacta16XPath);
-        $response['exacta_odds'][2][1] = $this->filterXPathForOdds($scraper, $exacta21XPath);
-        $response['exacta_odds'][2][3] = $this->filterXPathForOdds($scraper, $exacta23XPath);
-        $response['exacta_odds'][2][4] = $this->filterXPathForOdds($scraper, $exacta24XPath);
-        $response['exacta_odds'][2][5] = $this->filterXPathForOdds($scraper, $exacta25XPath);
-        $response['exacta_odds'][2][6] = $this->filterXPathForOdds($scraper, $exacta26XPath);
-        $response['exacta_odds'][3][1] = $this->filterXPathForOdds($scraper, $exacta31XPath);
-        $response['exacta_odds'][3][2] = $this->filterXPathForOdds($scraper, $exacta32XPath);
-        $response['exacta_odds'][3][4] = $this->filterXPathForOdds($scraper, $exacta34XPath);
-        $response['exacta_odds'][3][5] = $this->filterXPathForOdds($scraper, $exacta35XPath);
-        $response['exacta_odds'][3][6] = $this->filterXPathForOdds($scraper, $exacta36XPath);
-        $response['exacta_odds'][4][1] = $this->filterXPathForOdds($scraper, $exacta41XPath);
-        $response['exacta_odds'][4][2] = $this->filterXPathForOdds($scraper, $exacta42XPath);
-        $response['exacta_odds'][4][3] = $this->filterXPathForOdds($scraper, $exacta43XPath);
-        $response['exacta_odds'][4][5] = $this->filterXPathForOdds($scraper, $exacta45XPath);
-        $response['exacta_odds'][4][6] = $this->filterXPathForOdds($scraper, $exacta46XPath);
-        $response['exacta_odds'][5][1] = $this->filterXPathForOdds($scraper, $exacta51XPath);
-        $response['exacta_odds'][5][2] = $this->filterXPathForOdds($scraper, $exacta52XPath);
-        $response['exacta_odds'][5][3] = $this->filterXPathForOdds($scraper, $exacta53XPath);
-        $response['exacta_odds'][5][4] = $this->filterXPathForOdds($scraper, $exacta54XPath);
-        $response['exacta_odds'][5][6] = $this->filterXPathForOdds($scraper, $exacta56XPath);
-        $response['exacta_odds'][6][1] = $this->filterXPathForOdds($scraper, $exacta61XPath);
-        $response['exacta_odds'][6][2] = $this->filterXPathForOdds($scraper, $exacta62XPath);
-        $response['exacta_odds'][6][3] = $this->filterXPathForOdds($scraper, $exacta63XPath);
-        $response['exacta_odds'][6][4] = $this->filterXPathForOdds($scraper, $exacta64XPath);
-        $response['exacta_odds'][6][5] = $this->filterXPathForOdds($scraper, $exacta65XPath);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @return array
-     */
-    private function filterQuinellaOdds(Crawler $scraper): array
-    {
-        $response = [];
-
-        $quinella12XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[2]', $this->baseXPath, $this->baseLevel + 9);
-        $quinella13XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[2]', $this->baseXPath, $this->baseLevel + 9);
-        $quinella14XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[2]', $this->baseXPath, $this->baseLevel + 9);
-        $quinella15XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[2]', $this->baseXPath, $this->baseLevel + 9);
-        $quinella16XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[2]', $this->baseXPath, $this->baseLevel + 9);
-        $quinella23XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[4]', $this->baseXPath, $this->baseLevel + 9);
-        $quinella24XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[4]', $this->baseXPath, $this->baseLevel + 9);
-        $quinella25XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[4]', $this->baseXPath, $this->baseLevel + 9);
-        $quinella26XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[4]', $this->baseXPath, $this->baseLevel + 9);
-        $quinella34XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[6]', $this->baseXPath, $this->baseLevel + 9);
-        $quinella35XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[6]', $this->baseXPath, $this->baseLevel + 9);
-        $quinella36XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[6]', $this->baseXPath, $this->baseLevel + 9);
-        $quinella45XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[8]', $this->baseXPath, $this->baseLevel + 9);
-        $quinella46XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[8]', $this->baseXPath, $this->baseLevel + 9);
-        $quinella56XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[10]', $this->baseXPath, $this->baseLevel + 9);
-
-        $response['quinella_odds'][1][2] = $this->filterXPathForOdds($scraper, $quinella12XPath);
-        $response['quinella_odds'][1][3] = $this->filterXPathForOdds($scraper, $quinella13XPath);
-        $response['quinella_odds'][1][4] = $this->filterXPathForOdds($scraper, $quinella14XPath);
-        $response['quinella_odds'][1][5] = $this->filterXPathForOdds($scraper, $quinella15XPath);
-        $response['quinella_odds'][1][6] = $this->filterXPathForOdds($scraper, $quinella16XPath);
-        $response['quinella_odds'][2][3] = $this->filterXPathForOdds($scraper, $quinella23XPath);
-        $response['quinella_odds'][2][4] = $this->filterXPathForOdds($scraper, $quinella24XPath);
-        $response['quinella_odds'][2][5] = $this->filterXPathForOdds($scraper, $quinella25XPath);
-        $response['quinella_odds'][2][6] = $this->filterXPathForOdds($scraper, $quinella26XPath);
-        $response['quinella_odds'][3][4] = $this->filterXPathForOdds($scraper, $quinella34XPath);
-        $response['quinella_odds'][3][5] = $this->filterXPathForOdds($scraper, $quinella35XPath);
-        $response['quinella_odds'][3][6] = $this->filterXPathForOdds($scraper, $quinella36XPath);
-        $response['quinella_odds'][4][5] = $this->filterXPathForOdds($scraper, $quinella45XPath);
-        $response['quinella_odds'][4][6] = $this->filterXPathForOdds($scraper, $quinella46XPath);
-        $response['quinella_odds'][5][6] = $this->filterXPathForOdds($scraper, $quinella56XPath);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @return array
-     */
-    private function filterQuinellaPlaceOdds(Crawler $scraper): array
-    {
-        $response = [];
-
-        $quinellaPlace12XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $quinellaPlace13XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $quinellaPlace14XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $quinellaPlace15XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $quinellaPlace16XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $quinellaPlace23XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $quinellaPlace24XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $quinellaPlace25XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $quinellaPlace26XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $quinellaPlace34XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $quinellaPlace35XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $quinellaPlace36XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $quinellaPlace45XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $quinellaPlace46XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $quinellaPlace56XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-
-        $response['quinella_place_odds'][1][2] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $quinellaPlace12XPath);
-        $response['quinella_place_odds'][1][3] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $quinellaPlace13XPath);
-        $response['quinella_place_odds'][1][4] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $quinellaPlace14XPath);
-        $response['quinella_place_odds'][1][5] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $quinellaPlace15XPath);
-        $response['quinella_place_odds'][1][6] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $quinellaPlace16XPath);
-        $response['quinella_place_odds'][2][3] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $quinellaPlace23XPath);
-        $response['quinella_place_odds'][2][4] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $quinellaPlace24XPath);
-        $response['quinella_place_odds'][2][5] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $quinellaPlace25XPath);
-        $response['quinella_place_odds'][2][6] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $quinellaPlace26XPath);
-        $response['quinella_place_odds'][3][4] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $quinellaPlace34XPath);
-        $response['quinella_place_odds'][3][5] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $quinellaPlace35XPath);
-        $response['quinella_place_odds'][3][6] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $quinellaPlace36XPath);
-        $response['quinella_place_odds'][4][5] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $quinellaPlace45XPath);
-        $response['quinella_place_odds'][4][6] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $quinellaPlace46XPath);
-        $response['quinella_place_odds'][5][6] = $this->filterXPathForOddsWithLowerLimitAndUpperLimit($scraper, $quinellaPlace56XPath);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @return array
-     */
-    private function filterTrifectaOdds(Crawler $scraper): array
-    {
-        $response = [];
-
-        $trifecta123XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[3]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta124XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta125XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta126XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta132XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[3]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta134XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[6]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta135XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[7]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta136XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[8]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta142XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[9]/td[3]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta143XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[10]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta145XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[11]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta146XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[12]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta152XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[13]/td[3]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta153XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[14]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta154XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[15]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta156XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[16]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta162XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[17]/td[3]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta163XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[18]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta164XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[19]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta165XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[20]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta213XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta214XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta215XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta216XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta231XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta234XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[6]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta235XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[7]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta236XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[8]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta241XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[9]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta243XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[10]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta245XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[11]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta246XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[12]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta251XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[13]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta253XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[14]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta254XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[15]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta256XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[16]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta261XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[17]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta263XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[18]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta264XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[19]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta265XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[20]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta312XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[9]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta314XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta315XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta316XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta321XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[9]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta324XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[6]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta325XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[7]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta326XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[8]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta341XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[9]/td[9]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta342XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[10]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta345XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[11]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta346XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[12]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta351XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[13]/td[9]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta352XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[14]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta354XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[15]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta356XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[16]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta361XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[17]/td[9]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta362XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[18]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta364XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[19]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta365XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[20]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta412XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta413XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta415XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta416XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta421XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta423XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[6]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta425XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[7]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta426XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[8]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta431XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[9]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta432XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[10]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta435XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[11]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta436XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[12]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta451XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[13]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta452XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[14]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta453XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[15]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta456XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[16]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta461XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[17]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta462XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[18]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta463XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[19]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta465XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[20]/td[8]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta512XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[15]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta513XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta514XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta516XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta521XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[15]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta523XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[6]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta524XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[7]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta526XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[8]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta531XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[9]/td[15]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta532XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[10]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta534XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[11]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta536XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[12]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta541XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[13]/td[15]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta542XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[14]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta543XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[15]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta546XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[16]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta561XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[17]/td[15]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta562XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[18]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta563XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[19]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta564XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[20]/td[10]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta612XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[18]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta613XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta614XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta615XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta621XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[18]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta623XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[6]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta624XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[7]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta625XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[8]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta631XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[9]/td[18]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta632XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[10]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta634XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[11]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta635XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[12]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta641XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[13]/td[18]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta642XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[14]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta643XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[15]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta645XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[16]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta651XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[17]/td[18]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta652XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[18]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta653XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[19]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-        $trifecta654XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[20]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-
-        $response['trifecta_odds'][1][2][3] = $this->filterXPathForOdds($scraper, $trifecta123XPath);
-        $response['trifecta_odds'][1][2][4] = $this->filterXPathForOdds($scraper, $trifecta124XPath);
-        $response['trifecta_odds'][1][2][5] = $this->filterXPathForOdds($scraper, $trifecta125XPath);
-        $response['trifecta_odds'][1][2][6] = $this->filterXPathForOdds($scraper, $trifecta126XPath);
-        $response['trifecta_odds'][1][3][2] = $this->filterXPathForOdds($scraper, $trifecta132XPath);
-        $response['trifecta_odds'][1][3][4] = $this->filterXPathForOdds($scraper, $trifecta134XPath);
-        $response['trifecta_odds'][1][3][5] = $this->filterXPathForOdds($scraper, $trifecta135XPath);
-        $response['trifecta_odds'][1][3][6] = $this->filterXPathForOdds($scraper, $trifecta136XPath);
-        $response['trifecta_odds'][1][4][2] = $this->filterXPathForOdds($scraper, $trifecta142XPath);
-        $response['trifecta_odds'][1][4][3] = $this->filterXPathForOdds($scraper, $trifecta143XPath);
-        $response['trifecta_odds'][1][4][5] = $this->filterXPathForOdds($scraper, $trifecta145XPath);
-        $response['trifecta_odds'][1][4][6] = $this->filterXPathForOdds($scraper, $trifecta146XPath);
-        $response['trifecta_odds'][1][5][2] = $this->filterXPathForOdds($scraper, $trifecta152XPath);
-        $response['trifecta_odds'][1][5][3] = $this->filterXPathForOdds($scraper, $trifecta153XPath);
-        $response['trifecta_odds'][1][5][4] = $this->filterXPathForOdds($scraper, $trifecta154XPath);
-        $response['trifecta_odds'][1][5][6] = $this->filterXPathForOdds($scraper, $trifecta156XPath);
-        $response['trifecta_odds'][1][6][2] = $this->filterXPathForOdds($scraper, $trifecta162XPath);
-        $response['trifecta_odds'][1][6][3] = $this->filterXPathForOdds($scraper, $trifecta163XPath);
-        $response['trifecta_odds'][1][6][4] = $this->filterXPathForOdds($scraper, $trifecta164XPath);
-        $response['trifecta_odds'][1][6][5] = $this->filterXPathForOdds($scraper, $trifecta165XPath);
-        $response['trifecta_odds'][2][1][3] = $this->filterXPathForOdds($scraper, $trifecta213XPath);
-        $response['trifecta_odds'][2][1][4] = $this->filterXPathForOdds($scraper, $trifecta214XPath);
-        $response['trifecta_odds'][2][1][5] = $this->filterXPathForOdds($scraper, $trifecta215XPath);
-        $response['trifecta_odds'][2][1][6] = $this->filterXPathForOdds($scraper, $trifecta216XPath);
-        $response['trifecta_odds'][2][3][1] = $this->filterXPathForOdds($scraper, $trifecta231XPath);
-        $response['trifecta_odds'][2][3][4] = $this->filterXPathForOdds($scraper, $trifecta234XPath);
-        $response['trifecta_odds'][2][3][5] = $this->filterXPathForOdds($scraper, $trifecta235XPath);
-        $response['trifecta_odds'][2][3][6] = $this->filterXPathForOdds($scraper, $trifecta236XPath);
-        $response['trifecta_odds'][2][4][1] = $this->filterXPathForOdds($scraper, $trifecta241XPath);
-        $response['trifecta_odds'][2][4][3] = $this->filterXPathForOdds($scraper, $trifecta243XPath);
-        $response['trifecta_odds'][2][4][5] = $this->filterXPathForOdds($scraper, $trifecta245XPath);
-        $response['trifecta_odds'][2][4][6] = $this->filterXPathForOdds($scraper, $trifecta246XPath);
-        $response['trifecta_odds'][2][5][1] = $this->filterXPathForOdds($scraper, $trifecta251XPath);
-        $response['trifecta_odds'][2][5][3] = $this->filterXPathForOdds($scraper, $trifecta253XPath);
-        $response['trifecta_odds'][2][5][4] = $this->filterXPathForOdds($scraper, $trifecta254XPath);
-        $response['trifecta_odds'][2][5][6] = $this->filterXPathForOdds($scraper, $trifecta256XPath);
-        $response['trifecta_odds'][2][6][1] = $this->filterXPathForOdds($scraper, $trifecta261XPath);
-        $response['trifecta_odds'][2][6][3] = $this->filterXPathForOdds($scraper, $trifecta263XPath);
-        $response['trifecta_odds'][2][6][4] = $this->filterXPathForOdds($scraper, $trifecta264XPath);
-        $response['trifecta_odds'][2][6][5] = $this->filterXPathForOdds($scraper, $trifecta265XPath);
-        $response['trifecta_odds'][3][1][2] = $this->filterXPathForOdds($scraper, $trifecta312XPath);
-        $response['trifecta_odds'][3][1][4] = $this->filterXPathForOdds($scraper, $trifecta314XPath);
-        $response['trifecta_odds'][3][1][5] = $this->filterXPathForOdds($scraper, $trifecta315XPath);
-        $response['trifecta_odds'][3][1][6] = $this->filterXPathForOdds($scraper, $trifecta316XPath);
-        $response['trifecta_odds'][3][2][1] = $this->filterXPathForOdds($scraper, $trifecta321XPath);
-        $response['trifecta_odds'][3][2][4] = $this->filterXPathForOdds($scraper, $trifecta324XPath);
-        $response['trifecta_odds'][3][2][5] = $this->filterXPathForOdds($scraper, $trifecta325XPath);
-        $response['trifecta_odds'][3][2][6] = $this->filterXPathForOdds($scraper, $trifecta326XPath);
-        $response['trifecta_odds'][3][4][1] = $this->filterXPathForOdds($scraper, $trifecta341XPath);
-        $response['trifecta_odds'][3][4][2] = $this->filterXPathForOdds($scraper, $trifecta342XPath);
-        $response['trifecta_odds'][3][4][5] = $this->filterXPathForOdds($scraper, $trifecta345XPath);
-        $response['trifecta_odds'][3][4][6] = $this->filterXPathForOdds($scraper, $trifecta346XPath);
-        $response['trifecta_odds'][3][5][1] = $this->filterXPathForOdds($scraper, $trifecta351XPath);
-        $response['trifecta_odds'][3][5][2] = $this->filterXPathForOdds($scraper, $trifecta352XPath);
-        $response['trifecta_odds'][3][5][4] = $this->filterXPathForOdds($scraper, $trifecta354XPath);
-        $response['trifecta_odds'][3][5][6] = $this->filterXPathForOdds($scraper, $trifecta356XPath);
-        $response['trifecta_odds'][3][6][1] = $this->filterXPathForOdds($scraper, $trifecta361XPath);
-        $response['trifecta_odds'][3][6][2] = $this->filterXPathForOdds($scraper, $trifecta362XPath);
-        $response['trifecta_odds'][3][6][4] = $this->filterXPathForOdds($scraper, $trifecta364XPath);
-        $response['trifecta_odds'][3][6][5] = $this->filterXPathForOdds($scraper, $trifecta365XPath);
-        $response['trifecta_odds'][4][1][2] = $this->filterXPathForOdds($scraper, $trifecta412XPath);
-        $response['trifecta_odds'][4][1][3] = $this->filterXPathForOdds($scraper, $trifecta413XPath);
-        $response['trifecta_odds'][4][1][5] = $this->filterXPathForOdds($scraper, $trifecta415XPath);
-        $response['trifecta_odds'][4][1][6] = $this->filterXPathForOdds($scraper, $trifecta416XPath);
-        $response['trifecta_odds'][4][2][1] = $this->filterXPathForOdds($scraper, $trifecta421XPath);
-        $response['trifecta_odds'][4][2][3] = $this->filterXPathForOdds($scraper, $trifecta423XPath);
-        $response['trifecta_odds'][4][2][5] = $this->filterXPathForOdds($scraper, $trifecta425XPath);
-        $response['trifecta_odds'][4][2][6] = $this->filterXPathForOdds($scraper, $trifecta426XPath);
-        $response['trifecta_odds'][4][3][1] = $this->filterXPathForOdds($scraper, $trifecta431XPath);
-        $response['trifecta_odds'][4][3][2] = $this->filterXPathForOdds($scraper, $trifecta432XPath);
-        $response['trifecta_odds'][4][3][5] = $this->filterXPathForOdds($scraper, $trifecta435XPath);
-        $response['trifecta_odds'][4][3][6] = $this->filterXPathForOdds($scraper, $trifecta436XPath);
-        $response['trifecta_odds'][4][5][1] = $this->filterXPathForOdds($scraper, $trifecta451XPath);
-        $response['trifecta_odds'][4][5][2] = $this->filterXPathForOdds($scraper, $trifecta452XPath);
-        $response['trifecta_odds'][4][5][3] = $this->filterXPathForOdds($scraper, $trifecta453XPath);
-        $response['trifecta_odds'][4][5][6] = $this->filterXPathForOdds($scraper, $trifecta456XPath);
-        $response['trifecta_odds'][4][6][1] = $this->filterXPathForOdds($scraper, $trifecta461XPath);
-        $response['trifecta_odds'][4][6][2] = $this->filterXPathForOdds($scraper, $trifecta462XPath);
-        $response['trifecta_odds'][4][6][3] = $this->filterXPathForOdds($scraper, $trifecta463XPath);
-        $response['trifecta_odds'][4][6][5] = $this->filterXPathForOdds($scraper, $trifecta465XPath);
-        $response['trifecta_odds'][5][1][2] = $this->filterXPathForOdds($scraper, $trifecta512XPath);
-        $response['trifecta_odds'][5][1][3] = $this->filterXPathForOdds($scraper, $trifecta513XPath);
-        $response['trifecta_odds'][5][1][4] = $this->filterXPathForOdds($scraper, $trifecta514XPath);
-        $response['trifecta_odds'][5][1][6] = $this->filterXPathForOdds($scraper, $trifecta516XPath);
-        $response['trifecta_odds'][5][2][1] = $this->filterXPathForOdds($scraper, $trifecta521XPath);
-        $response['trifecta_odds'][5][2][3] = $this->filterXPathForOdds($scraper, $trifecta523XPath);
-        $response['trifecta_odds'][5][2][4] = $this->filterXPathForOdds($scraper, $trifecta524XPath);
-        $response['trifecta_odds'][5][2][6] = $this->filterXPathForOdds($scraper, $trifecta526XPath);
-        $response['trifecta_odds'][5][3][1] = $this->filterXPathForOdds($scraper, $trifecta531XPath);
-        $response['trifecta_odds'][5][3][2] = $this->filterXPathForOdds($scraper, $trifecta532XPath);
-        $response['trifecta_odds'][5][3][4] = $this->filterXPathForOdds($scraper, $trifecta534XPath);
-        $response['trifecta_odds'][5][3][6] = $this->filterXPathForOdds($scraper, $trifecta536XPath);
-        $response['trifecta_odds'][5][4][1] = $this->filterXPathForOdds($scraper, $trifecta541XPath);
-        $response['trifecta_odds'][5][4][2] = $this->filterXPathForOdds($scraper, $trifecta542XPath);
-        $response['trifecta_odds'][5][4][3] = $this->filterXPathForOdds($scraper, $trifecta543XPath);
-        $response['trifecta_odds'][5][4][6] = $this->filterXPathForOdds($scraper, $trifecta546XPath);
-        $response['trifecta_odds'][5][6][1] = $this->filterXPathForOdds($scraper, $trifecta561XPath);
-        $response['trifecta_odds'][5][6][2] = $this->filterXPathForOdds($scraper, $trifecta562XPath);
-        $response['trifecta_odds'][5][6][3] = $this->filterXPathForOdds($scraper, $trifecta563XPath);
-        $response['trifecta_odds'][5][6][4] = $this->filterXPathForOdds($scraper, $trifecta564XPath);
-        $response['trifecta_odds'][6][1][2] = $this->filterXPathForOdds($scraper, $trifecta612XPath);
-        $response['trifecta_odds'][6][1][3] = $this->filterXPathForOdds($scraper, $trifecta613XPath);
-        $response['trifecta_odds'][6][1][4] = $this->filterXPathForOdds($scraper, $trifecta614XPath);
-        $response['trifecta_odds'][6][1][5] = $this->filterXPathForOdds($scraper, $trifecta615XPath);
-        $response['trifecta_odds'][6][2][1] = $this->filterXPathForOdds($scraper, $trifecta621XPath);
-        $response['trifecta_odds'][6][2][3] = $this->filterXPathForOdds($scraper, $trifecta623XPath);
-        $response['trifecta_odds'][6][2][4] = $this->filterXPathForOdds($scraper, $trifecta624XPath);
-        $response['trifecta_odds'][6][2][5] = $this->filterXPathForOdds($scraper, $trifecta625XPath);
-        $response['trifecta_odds'][6][3][1] = $this->filterXPathForOdds($scraper, $trifecta631XPath);
-        $response['trifecta_odds'][6][3][2] = $this->filterXPathForOdds($scraper, $trifecta632XPath);
-        $response['trifecta_odds'][6][3][4] = $this->filterXPathForOdds($scraper, $trifecta634XPath);
-        $response['trifecta_odds'][6][3][5] = $this->filterXPathForOdds($scraper, $trifecta635XPath);
-        $response['trifecta_odds'][6][4][1] = $this->filterXPathForOdds($scraper, $trifecta641XPath);
-        $response['trifecta_odds'][6][4][2] = $this->filterXPathForOdds($scraper, $trifecta642XPath);
-        $response['trifecta_odds'][6][4][3] = $this->filterXPathForOdds($scraper, $trifecta643XPath);
-        $response['trifecta_odds'][6][4][5] = $this->filterXPathForOdds($scraper, $trifecta645XPath);
-        $response['trifecta_odds'][6][5][1] = $this->filterXPathForOdds($scraper, $trifecta651XPath);
-        $response['trifecta_odds'][6][5][2] = $this->filterXPathForOdds($scraper, $trifecta652XPath);
-        $response['trifecta_odds'][6][5][3] = $this->filterXPathForOdds($scraper, $trifecta653XPath);
-        $response['trifecta_odds'][6][5][4] = $this->filterXPathForOdds($scraper, $trifecta654XPath);
-
-        return $response;
-    }
-
-    /**
-     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @psalm-return array<non-empty-string, mixed>
-     *
-     * @param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @return array
-     */
-    private function filterTrioOdds(Crawler $scraper): array
-    {
-        $response = [];
-
-        $trio123XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[1]/td[3]', $this->baseXPath, $this->baseLevel + 7);
-        $trio124XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[2]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trio125XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[3]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trio126XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[4]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trio134XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[3]', $this->baseXPath, $this->baseLevel + 7);
-        $trio135XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[6]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trio136XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[7]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trio145XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[8]/td[3]', $this->baseXPath, $this->baseLevel + 7);
-        $trio146XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[9]/td[2]', $this->baseXPath, $this->baseLevel + 7);
-        $trio156XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[10]/td[3]', $this->baseXPath, $this->baseLevel + 7);
-        $trio234XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[5]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trio235XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[6]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trio236XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[7]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trio245XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[8]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trio246XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[9]/td[4]', $this->baseXPath, $this->baseLevel + 7);
-        $trio256XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[10]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trio345XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[8]/td[9]', $this->baseXPath, $this->baseLevel + 7);
-        $trio346XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[9]/td[6]', $this->baseXPath, $this->baseLevel + 7);
-        $trio356XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[10]/td[9]', $this->baseXPath, $this->baseLevel + 7);
-        $trio456XPath = sprintf('%s/div[2]/div[%s]/table/tbody/tr[10]/td[12]', $this->baseXPath, $this->baseLevel + 7);
-
-        $response['trio_odds'][1][2][3] = $this->filterXPathForOdds($scraper, $trio123XPath);
-        $response['trio_odds'][1][2][4] = $this->filterXPathForOdds($scraper, $trio124XPath);
-        $response['trio_odds'][1][2][5] = $this->filterXPathForOdds($scraper, $trio125XPath);
-        $response['trio_odds'][1][2][6] = $this->filterXPathForOdds($scraper, $trio126XPath);
-        $response['trio_odds'][1][3][4] = $this->filterXPathForOdds($scraper, $trio134XPath);
-        $response['trio_odds'][1][3][5] = $this->filterXPathForOdds($scraper, $trio135XPath);
-        $response['trio_odds'][1][3][6] = $this->filterXPathForOdds($scraper, $trio136XPath);
-        $response['trio_odds'][1][4][5] = $this->filterXPathForOdds($scraper, $trio145XPath);
-        $response['trio_odds'][1][4][6] = $this->filterXPathForOdds($scraper, $trio146XPath);
-        $response['trio_odds'][1][5][6] = $this->filterXPathForOdds($scraper, $trio156XPath);
-        $response['trio_odds'][2][3][4] = $this->filterXPathForOdds($scraper, $trio234XPath);
-        $response['trio_odds'][2][3][5] = $this->filterXPathForOdds($scraper, $trio235XPath);
-        $response['trio_odds'][2][3][6] = $this->filterXPathForOdds($scraper, $trio236XPath);
-        $response['trio_odds'][2][4][5] = $this->filterXPathForOdds($scraper, $trio245XPath);
-        $response['trio_odds'][2][4][6] = $this->filterXPathForOdds($scraper, $trio246XPath);
-        $response['trio_odds'][2][5][6] = $this->filterXPathForOdds($scraper, $trio256XPath);
-        $response['trio_odds'][3][4][5] = $this->filterXPathForOdds($scraper, $trio345XPath);
-        $response['trio_odds'][3][4][6] = $this->filterXPathForOdds($scraper, $trio346XPath);
-        $response['trio_odds'][3][5][6] = $this->filterXPathForOdds($scraper, $trio356XPath);
-        $response['trio_odds'][4][5][6] = $this->filterXPathForOdds($scraper, $trio456XPath);
-
-        return $response;
     }
 }

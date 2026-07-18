@@ -4,175 +4,168 @@ declare(strict_types=1);
 
 namespace BVP\Scraper\Scrapers;
 
-use BVP\Converter\Converter;
+use BVP\Scraper\Contracts\Scraper;
+use BVP\Scraper\Filters\Filter;
+use BVP\Scraper\Filters\WindDirectionFilter;
+use BVP\Scraper\Parsers\Parser;
+use BVP\Scraper\Parsers\PreviewParser;
 use Carbon\CarbonInterface;
 use Symfony\Component\DomCrawler\Crawler;
 
 /**
  * @author shimomo
  */
-final class PreviewScraper extends BaseScraper implements PreviewScraperInterface
+final class PreviewScraper extends BaseScraper implements Scraper
 {
     /**
-     * @psalm-var non-empty-string
-     *
-     * @var string
+     * @var non-empty-string
      */
     private string $baseXPath = 'descendant-or-self::body/main/div/div/div';
 
     /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return array<non-empty-string, mixed>
-     *
+     * @var int<0, 1>
+     */
+    private int $baseLevel = 0;
+
+    /**
      * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return array
+     * @param int<1, 24> $stadiumNumber
+     * @param int<1, 12> $raceNumber
+     * @return array<non-empty-string, mixed>
      */
     #[\Override]
-    public function scrape(CarbonInterface $date, int $stadiumNumber, int $number): array
+    public function scrape(CarbonInterface $date, int $stadiumNumber, int $raceNumber): array
     {
-        $response = [];
-
         $scraperFormat = '%s/owpc/pc/race/beforeinfo?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $raceNumber);
         $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
-        sleep($this->seconds);
 
         $levelFormat = '%s/div[2]/div[3]/ul/li';
         $levelXPath = sprintf($levelFormat, $this->baseXPath);
 
         $this->baseLevel = 0;
-        if ($this->filterXPath($scraper, $levelXPath) !== null) {
+        if (Filter::byXPath($scraper, $levelXPath) !== null) {
             $this->baseLevel = 1;
         }
 
-        $windSpeedFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[3]/div/span[2]';
-        $windDirectionNumberFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[4]/p';
-        $waveHeightFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[6]/div/span[2]';
-        $weatherNumberFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[2]/div/span';
-        $airTemperatureFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[1]/div/span[2]';
-        $waterTemperatureFormat = '%s/div[2]/div[%s]/div[2]/div[2]/div[1]/div[5]/div/span[2]';
-
+        $windSpeedFormat = '%s/div[2]/div[%d]/div[2]/div[2]/div[1]/div[3]/div/span[2]';
         $windSpeedXPath = sprintf($windSpeedFormat, $this->baseXPath, $this->baseLevel + 5);
-        $windDirectionNumberXPath = sprintf($windDirectionNumberFormat, $this->baseXPath, $this->baseLevel + 5);
+        $windSpeed = PreviewParser::parseWindSpeed(Filter::byXPath($scraper, $windSpeedXPath));
+
+        $windDirectionFormat = '%s/div[2]/div[%d]/div[2]/div[2]/div[1]/div[4]/p';
+        $windDirectionXPath = sprintf($windDirectionFormat, $this->baseXPath, $this->baseLevel + 5);
+        $windDirection = PreviewParser::parseWindDirection(WindDirectionFilter::byXPath($scraper, $windDirectionXPath));
+
+        $waveHeightFormat = '%s/div[2]/div[%d]/div[2]/div[2]/div[1]/div[6]/div/span[2]';
         $waveHeightXPath = sprintf($waveHeightFormat, $this->baseXPath, $this->baseLevel + 5);
-        $weatherNameXPath = sprintf($weatherNumberFormat, $this->baseXPath, $this->baseLevel + 5);
+        $waveHeight = PreviewParser::parseWaveHeight(Filter::byXPath($scraper, $waveHeightXPath));
+
+        $weatherFormat = '%s/div[2]/div[%d]/div[2]/div[2]/div[1]/div[2]/div/span';
+        $weatherXPath = sprintf($weatherFormat, $this->baseXPath, $this->baseLevel + 5);
+        $weather = PreviewParser::parseWeather(Filter::byXPath($scraper, $weatherXPath));
+
+        $airTemperatureFormat = '%s/div[2]/div[%d]/div[2]/div[2]/div[1]/div[1]/div/span[2]';
         $airTemperatureXPath = sprintf($airTemperatureFormat, $this->baseXPath, $this->baseLevel + 5);
+        $airTemperature = PreviewParser::parseAirTemperature(Filter::byXPath($scraper, $airTemperatureXPath));
+
+        $waterTemperatureFormat = '%s/div[2]/div[%d]/div[2]/div[2]/div[1]/div[5]/div/span[2]';
         $waterTemperatureXPath = sprintf($waterTemperatureFormat, $this->baseXPath, $this->baseLevel + 5);
+        $waterTemperature = PreviewParser::parseWaterTemperature(Filter::byXPath($scraper, $waterTemperatureXPath));
 
-        $windSpeed = $this->filterXPath($scraper, $windSpeedXPath);
-        $windDirectionNumber = $this->filterXPathForWindDirectionNumber($scraper, $windDirectionNumberXPath);
-        $waveHeight = $this->filterXPath($scraper, $waveHeightXPath);
-        $weatherName = $this->filterXPath($scraper, $weatherNameXPath);
-        $airTemperature = $this->filterXPath($scraper, $airTemperatureXPath);
-        $waterTemperature = $this->filterXPath($scraper, $waterTemperatureXPath);
-
-        $windSpeed = Converter::parseWindSpeed($windSpeed);
-        $windDirectionNumber = Converter::parseWindDirectionNumber($windDirectionNumber);
-        $waveHeight = Converter::parseWaveHeight($waveHeight);
-        $weatherNumber = Converter::convertToWeatherNumber($weatherName);
-        $airTemperature = Converter::parseTemperature($airTemperature);
-        $waterTemperature = Converter::parseTemperature($waterTemperature);
+        $response = [];
 
         $response['date'] = $date->format('Y-m-d');
         $response['stadium_number'] = $stadiumNumber;
-        $response['number'] = $number;
-        $response['wind_speed'] = $windSpeed;
-        $response['wind_direction_number'] = $windDirectionNumber;
-        $response['wave_height'] = $waveHeight;
-        $response['weather_number'] = $weatherNumber;
-        $response['air_temperature'] = $airTemperature;
-        $response['water_temperature'] = $waterTemperature;
+        $response['race_number'] = $raceNumber;
 
-        $response += $this->scrapeBoats($scraper);
+        $response += $windSpeed;
+        $response += $windDirection;
+        $response += $waveHeight;
+        $response += $weather;
+        $response += $airTemperature;
+        $response += $waterTemperature;
+
+        $response += $this->scrapeRacers($scraper);
 
         return $response;
     }
 
     /**
-     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @psalm-return array<non-empty-string, mixed>
-     *
      * @param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @return array
+     * @return array<non-empty-string, mixed>
      */
-    private function scrapeBoats(Crawler $scraper): array
+    private function scrapeRacers(Crawler $scraper): array
     {
-        $response = [];
+        $response = ['racers' => []];
 
-        foreach (range(1, 6) as $boatNumber) {
-            $response['boats'][$boatNumber]['racer_boat_number'] = $boatNumber;
-            $response['boats'][$boatNumber]['racer_course_number'] = null;
-            $response['boats'][$boatNumber]['racer_start_timing'] = null;
-            $response['boats'][$boatNumber]['racer_weight'] = null;
-            $response['boats'][$boatNumber]['racer_weight_adjustment'] = null;
-            $response['boats'][$boatNumber]['racer_exhibition_time'] = null;
-            $response['boats'][$boatNumber]['racer_tilt_adjustment'] = null;
-        }
+        foreach (range(1, 6) as $index) {
+            $entryNumberFormat = '%s/div[2]/div[%d]/div[2]/div[1]/table/tbody/tr[%s]/td/div/span[1]';
+            $entryNumberXPath = sprintf($entryNumberFormat, $this->baseXPath, $this->baseLevel + 5, $index);
+            $entryNumber = Parser::parseEntryNumber(Filter::byXPath($scraper, $entryNumberXPath));
 
-        $racerBoatNumberFormat = '%s/div[2]/div[%s]/div[2]/div[1]/table/tbody/tr[%s]/td/div/span[1]';
-        $racerStartTimingFormat = '%s/div[2]/div[%s]/div[2]/div[1]/table/tbody/tr[%s]/td/div/span[3]';
+            $course = ['course_number' => $index];
 
-        foreach (range(1, 6) as $courseNumber) {
-            $racerBoatNumberXPath = sprintf($racerBoatNumberFormat, $this->baseXPath, $this->baseLevel + 5, $courseNumber);
-            $racerStartTimingXPath = sprintf($racerStartTimingFormat, $this->baseXPath, $this->baseLevel + 5, $courseNumber);
+            $startTimingFormat = '%s/div[2]/div[%d]/div[2]/div[1]/table/tbody/tr[%s]/td/div/span[3]';
+            $startTimingXPath = sprintf($startTimingFormat, $this->baseXPath, $this->baseLevel + 5, $index);
+            $startTiming = PreviewParser::parseStartTiming(Filter::byXPath($scraper, $startTimingXPath));
 
-            $racerBoatNumber = $this->filterXPath($scraper, $racerBoatNumberXPath);
-            $racerStartTiming = $this->filterXPath($scraper, $racerStartTimingXPath);
+            if (!isset($entryNumber['entry_number'])) {
+                $entryNumber['entry_number'] = $index;
+                $course['course_number'] = null;
+            }
 
-            $racerCourseNumber = $courseNumber;
-            $racerBoatNumber = Converter::convertToInt($racerBoatNumber);
-            $racerStartTiming = Converter::parseStartTiming($racerStartTiming);
+            $entryNumberKey = $entryNumber['entry_number'];
 
-            if ($racerBoatNumber === null) {
+            if (!in_array($entryNumberKey, range(1, 6), true)) {
                 continue;
             }
 
-            $response['boats'][$racerBoatNumber]['racer_boat_number'] = $racerBoatNumber;
-            $response['boats'][$racerBoatNumber]['racer_course_number'] = $racerCourseNumber;
-            $response['boats'][$racerBoatNumber]['racer_start_timing'] = $racerStartTiming;
+            $response['racers'][$entryNumberKey] ??= [];
+            $response['racers'][$entryNumberKey] += $entryNumber;
+            $response['racers'][$entryNumberKey] += $course;
+            $response['racers'][$entryNumberKey] += $startTiming;
         }
 
-        $racerBoatNumberFormat = '%s/div[2]/div[%s]/div[1]/div[1]/table/tbody[%s]/tr[1]/td[1]';
-        $racerWeightFormat = '%s/div[2]/div[%s]/div[1]/div[1]/table/tbody[%s]/tr[1]/td[4]';
-        $racerWeightAdjustmentFormat = '%s/div[2]/div[%s]/div[1]/div[1]/table/tbody[%s]/tr[3]/td[1]';
-        $racerExhibitionTimeFormat = '%s/div[2]/div[%s]/div[1]/div[1]/table/tbody[%s]/tr[1]/td[5]';
-        $racerTiltAdjustmentFormat = '%s/div[2]/div[%s]/div[1]/div[1]/table/tbody[%s]/tr[1]/td[6]';
+        foreach (range(1, 6) as $index) {
+            $entryNumberFormat = '%s/div[2]/div[%d]/div[1]/div[1]/table/tbody[%s]/tr[1]/td[1]';
+            $entryNumberXPath = sprintf($entryNumberFormat, $this->baseXPath, $this->baseLevel + 5, $index);
+            $entryNumber = Parser::parseEntryNumber(Filter::byXPath($scraper, $entryNumberXPath));
 
-        foreach (range(1, 6) as $boatNumber) {
-            $racerBoatNumberXPath = sprintf($racerBoatNumberFormat, $this->baseXPath, $this->baseLevel + 5, $boatNumber);
-            $racerWeightXPath = sprintf($racerWeightFormat, $this->baseXPath, $this->baseLevel + 5, $boatNumber);
-            $racerWeightAdjustmentXPath = sprintf($racerWeightAdjustmentFormat, $this->baseXPath, $this->baseLevel + 5, $boatNumber);
-            $racerExhibitionTimeXPath = sprintf($racerExhibitionTimeFormat, $this->baseXPath, $this->baseLevel + 5, $boatNumber);
-            $racerTiltAdjustmentXPath = sprintf($racerTiltAdjustmentFormat, $this->baseXPath, $this->baseLevel + 5, $boatNumber);
+            $weightFormat = '%s/div[2]/div[%d]/div[1]/div[1]/table/tbody[%s]/tr[1]/td[4]';
+            $weightXPath = sprintf($weightFormat, $this->baseXPath, $this->baseLevel + 5, $index);
+            $weight = PreviewParser::parseWeight(Filter::byXPath($scraper, $weightXPath));
 
-            $racerBoatNumber = $this->filterXPath($scraper, $racerBoatNumberXPath);
-            $racerWeight = $this->filterXPath($scraper, $racerWeightXPath);
-            $racerWeightAdjustment = $this->filterXPath($scraper, $racerWeightAdjustmentXPath);
-            $racerExhibitionTime = $this->filterXPath($scraper, $racerExhibitionTimeXPath);
-            $racerTiltAdjustment = $this->filterXPath($scraper, $racerTiltAdjustmentXPath);
+            $weightAdjustmentFormat = '%s/div[2]/div[%d]/div[1]/div[1]/table/tbody[%s]/tr[3]/td[1]';
+            $weightAdjustmentXPath = sprintf($weightAdjustmentFormat, $this->baseXPath, $this->baseLevel + 5, $index);
+            $weightAdjustment = PreviewParser::parseWeightAdjustment(Filter::byXPath($scraper, $weightAdjustmentXPath));
 
-            $racerBoatNumber = Converter::convertToInt($racerBoatNumber);
-            $racerWeight = Converter::convertToFloat($racerWeight);
-            $racerWeightAdjustment = Converter::convertToFloat($racerWeightAdjustment);
-            $racerExhibitionTime = Converter::convertToFloat($racerExhibitionTime);
-            $racerTiltAdjustment = Converter::convertToFloat($racerTiltAdjustment);
+            $exhibitionTimeFormat = '%s/div[2]/div[%d]/div[1]/div[1]/table/tbody[%s]/tr[1]/td[5]';
+            $exhibitionTimeXPath = sprintf($exhibitionTimeFormat, $this->baseXPath, $this->baseLevel + 5, $index);
+            $exhibitionTime = PreviewParser::parseExhibitionTime(Filter::byXPath($scraper, $exhibitionTimeXPath));
 
-            if ($racerBoatNumber === null) {
+            $tiltAdjustmentFormat = '%s/div[2]/div[%d]/div[1]/div[1]/table/tbody[%s]/tr[1]/td[6]';
+            $tiltAdjustmentXPath = sprintf($tiltAdjustmentFormat, $this->baseXPath, $this->baseLevel + 5, $index);
+            $tiltAdjustment = PreviewParser::parseTiltAdjustment(Filter::byXPath($scraper, $tiltAdjustmentXPath));
+
+            if (!isset($entryNumber['entry_number'])) {
+                $entryNumber['entry_number'] = $index;
+            }
+
+            $entryNumberKey = $entryNumber['entry_number'];
+
+            if (!in_array($entryNumberKey, range(1, 6), true)) {
                 continue;
             }
 
-            $response['boats'][$racerBoatNumber]['racer_boat_number'] = $racerBoatNumber;
-            $response['boats'][$racerBoatNumber]['racer_weight'] = $racerWeight;
-            $response['boats'][$racerBoatNumber]['racer_weight_adjustment'] = $racerWeightAdjustment;
-            $response['boats'][$racerBoatNumber]['racer_exhibition_time'] = $racerExhibitionTime;
-            $response['boats'][$racerBoatNumber]['racer_tilt_adjustment'] = $racerTiltAdjustment;
+            $response['racers'][$entryNumberKey] ??= [];
+            $response['racers'][$entryNumberKey] += $entryNumber;
+            $response['racers'][$entryNumberKey] += $weight;
+            $response['racers'][$entryNumberKey] += $weightAdjustment;
+            $response['racers'][$entryNumberKey] += $exhibitionTime;
+            $response['racers'][$entryNumberKey] += $tiltAdjustment;
         }
 
-        ksort($response['boats']);
+        ksort($response['racers'], SORT_NUMERIC);
 
         return $response;
     }

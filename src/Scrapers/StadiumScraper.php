@@ -4,30 +4,30 @@ declare(strict_types=1);
 
 namespace BVP\Scraper\Scrapers;
 
-use BVP\Converter\Converter;
+use BVP\Scraper\Contracts\StadiumScraper as StadiumScraperContract;
+use BVP\Scraper\Converters\Converter;
+use BVP\Scraper\Enums\Stadium;
 use Carbon\CarbonInterface;
 use Symfony\Component\DomCrawler\Crawler;
 
 /**
  * @author shimomo
  */
-final class StadiumScraper extends BaseScraper implements StadiumScraperInterface
+final class StadiumScraper extends BaseScraper implements StadiumScraperContract
 {
     /**
-     * @psalm-param \Carbon\CarbonInterface $raceDate
-     * @psalm-return array<int<1, 24>, non-empty-string>
-     *
-     * @param \Carbon\CarbonInterface $raceDate
-     * @return array
+     * @param \Carbon\CarbonInterface $date
+     * @return array<int<1, 24>, non-empty-string>
      */
     #[\Override]
-    public function scrape(CarbonInterface $raceDate): array
+    public function scrape(CarbonInterface $date): array
     {
         $scraperFormat = '%s/owpc/pc/race/index?hd=%s';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $raceDate->format('Ymd'));
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'));
         $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
         $scraper = $scraper->filter('.table1')->eq(0);
         $scraper = $scraper->filter('table tbody td.is-arrow1.is-fBold.is-fs15');
+
         $stadiums = $scraper->each(function (Crawler $element): array {
             $stadiumName = $element->filter('a')->filter('img')->attr('alt');
             if ($stadiumName === null || $stadiumName === '') {
@@ -39,12 +39,12 @@ final class StadiumScraper extends BaseScraper implements StadiumScraperInterfac
                 return [];
             }
 
-            $stadiumNumber = Converter::convertToStadiumNumber($stadiumName);
-            if ($stadiumNumber === null) {
+            $stadium = Converter::toEnumOrNull(fn() => Stadium::fromName($stadiumName));
+            if ($stadium === null) {
                 return [];
             }
 
-            return [$stadiumNumber => $stadiumName];
+            return [$stadium->value => $stadiumName];
         });
 
         $response = [];

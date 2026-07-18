@@ -28,189 +28,16 @@ final class OddsScraperDataProvider
     {
         return [
             [
-                'arguments' => [Carbon::parse('2017-03-31'), 24, 1],
+                'arguments' => [
+                    Carbon::parse('2017-03-31'),
+                    24,
+                    1,
+                ],
                 'expected' => [
                     'date' => '2017-03-31',
                     'stadium_number' => 24,
-                    'number' => 1,
-                    'win_odds' => [
-                        1 => 1.0,
-                        2 => 25.6,
-                        3 => 33.5,
-                        4 => 31.1,
-                        5 => 31.1,
-                        6 => 218.2,
-                    ],
-                    'place_odds' => [
-                        1 => [
-                            'lower_limit' => 1.0,
-                            'upper_limit' => 1.0,
-                        ],
-                        2 => [
-                            'lower_limit' => 1.5,
-                            'upper_limit' => 20.9,
-                        ],
-                        3 => [
-                            'lower_limit' => 2.4,
-                            'upper_limit' => 37.8,
-                        ],
-                        4 => [
-                            'lower_limit' => 2.1,
-                            'upper_limit' => 33.3,
-                        ],
-                        5 => [
-                            'lower_limit' => 2.1,
-                            'upper_limit' => 33.3,
-                        ],
-                        6 => [
-                            'lower_limit' => 5.1,
-                            'upper_limit' => 86.6,
-                        ],
-                    ],
-                    'exacta_odds' => [
-                        1 => [
-                            2 => 1.8,
-                            3 => 7.7,
-                            4 => 3.8,
-                            5 => 6.0,
-                            6 => 48.5,
-                        ],
-                        2 => [
-                            1 => 21.1,
-                            3 => 269.3,
-                            4 => 95.0,
-                            5 => 126.7,
-                            6 => 403.9,
-                        ],
-                        3 => [
-                            1 => 124.2,
-                            2 => 380.2,
-                            4 => 430.9,
-                            5 => 359.0,
-                            6 => 403.9,
-                        ],
-                        4 => [
-                            1 => 47.1,
-                            2 => 109.5,
-                            3 => 269.3,
-                            5 => 69.5,
-                            6 => 359.0,
-                        ],
-                        5 => [
-                            1 => 30.6,
-                            2 => 78.8,
-                            3 => 239.3,
-                            4 => 75.1,
-                            6 => 258.5,
-                        ],
-                        6 => [
-                            1 => 215.4,
-                            2 => 497.1,
-                            3 => 1077.0,
-                            4 => 923.3,
-                            5 => 359.0,
-                        ],
-                    ],
-                    'quinella_odds' => [
-                        1 => [
-                            2 => 1.5,
-                            3 => 9.0,
-                            4 => 3.5,
-                            5 => 5.8,
-                            6 => 49.8,
-                        ],
-                        2 => [
-                            3 => 84.3,
-                            4 => 52.2,
-                            5 => 64.5,
-                            6 => 274.1,
-                        ],
-                        3 => [
-                            4 => 156.6,
-                            5 => 156.6,
-                            6 => 274.1,
-                        ],
-                        4 => [
-                            5 => 52.2,
-                            6 => 274.1,
-                        ],
-                        5 => [
-                            6 => 109.6,
-                        ],
-                    ],
-                    'quinella_place_odds' => [
-                        1 => [
-                            2 => [
-                                'lower_limit' => 1.0,
-                                'upper_limit' => 1.2,
-                            ],
-                            3 => [
-                                'lower_limit' => 1.8,
-                                'upper_limit' => 2.5,
-                            ],
-                            4 => [
-                                'lower_limit' => 1.6,
-                                'upper_limit' => 2.5,
-                            ],
-                            5 => [
-                                'lower_limit' => 2.4,
-                                'upper_limit' => 3.6,
-                            ],
-                            6 => [
-                                'lower_limit' => 7.9,
-                                'upper_limit' => 10.9,
-                            ],
-                        ],
-                        2 => [
-                            3 => [
-                                'lower_limit' => 2.9,
-                                'upper_limit' => 4.8,
-                            ],
-                            4 => [
-                                'lower_limit' => 2.0,
-                                'upper_limit' => 3.3,
-                            ],
-                            5 => [
-                                'lower_limit' => 2.8,
-                                'upper_limit' => 4.4,
-                            ],
-                            6 => [
-                                'lower_limit' => 12.5,
-                                'upper_limit' => 18.0,
-                            ],
-                        ],
-                        3 => [
-                            4 => [
-                                'lower_limit' => 11.7,
-                                'upper_limit' => 15.0,
-                            ],
-                            5 => [
-                                'lower_limit' => 8.8,
-                                'upper_limit' => 10.6,
-                            ],
-                            6 => [
-                                'lower_limit' => 44.9,
-                                'upper_limit' => 50.7,
-                            ],
-                        ],
-                        4 => [
-                            5 => [
-                                'lower_limit' => 5.0,
-                                'upper_limit' => 6.1,
-                            ],
-                            6 => [
-                                'lower_limit' => 25.7,
-                                'upper_limit' => 29.3,
-                            ],
-                        ],
-                        5 => [
-                            6 => [
-                                'lower_limit' => 23.7,
-                                'upper_limit' => 25.5,
-                            ],
-                        ],
-                    ],
-                    'trifecta_odds' => [
+                    'race_number' => 1,
+                    'trifecta' => [
                         1 => [
                             2 => [
                                 3 => 9.4,
@@ -404,7 +231,7 @@ final class OddsScraperDataProvider
                             ],
                         ],
                     ],
-                    'trio_odds' => [
+                    'trio' => [
                         1 => [
                             2 => [
                                 3 => 6.5,
@@ -454,15 +281,583 @@ final class OddsScraperDataProvider
                             ],
                         ],
                     ],
+                    'exacta' => [
+                        1 => [
+                            2 => 1.8,
+                            3 => 7.7,
+                            4 => 3.8,
+                            5 => 6.0,
+                            6 => 48.5,
+                        ],
+                        2 => [
+                            1 => 21.1,
+                            3 => 269.3,
+                            4 => 95.0,
+                            5 => 126.7,
+                            6 => 403.9,
+                        ],
+                        3 => [
+                            1 => 124.2,
+                            2 => 380.2,
+                            4 => 430.9,
+                            5 => 359.0,
+                            6 => 403.9,
+                        ],
+                        4 => [
+                            1 => 47.1,
+                            2 => 109.5,
+                            3 => 269.3,
+                            5 => 69.5,
+                            6 => 359.0,
+                        ],
+                        5 => [
+                            1 => 30.6,
+                            2 => 78.8,
+                            3 => 239.3,
+                            4 => 75.1,
+                            6 => 258.5,
+                        ],
+                        6 => [
+                            1 => 215.4,
+                            2 => 497.1,
+                            3 => 1077.0,
+                            4 => 923.3,
+                            5 => 359.0,
+                        ],
+                    ],
+                    'quinella' => [
+                        1 => [
+                            2 => 1.5,
+                            3 => 9.0,
+                            4 => 3.5,
+                            5 => 5.8,
+                            6 => 49.8,
+                        ],
+                        2 => [
+                            3 => 84.3,
+                            4 => 52.2,
+                            5 => 64.5,
+                            6 => 274.1,
+                        ],
+                        3 => [
+                            4 => 156.6,
+                            5 => 156.6,
+                            6 => 274.1,
+                        ],
+                        4 => [
+                            5 => 52.2,
+                            6 => 274.1,
+                        ],
+                        5 => [
+                            6 => 109.6,
+                        ],
+                    ],
+                    'quinella_place' => [
+                        1 => [
+                            2 => [
+                                'lower_limit' => 1.0,
+                                'upper_limit' => 1.2,
+                            ],
+                            3 => [
+                                'lower_limit' => 1.8,
+                                'upper_limit' => 2.5,
+                            ],
+                            4 => [
+                                'lower_limit' => 1.6,
+                                'upper_limit' => 2.5,
+                            ],
+                            5 => [
+                                'lower_limit' => 2.4,
+                                'upper_limit' => 3.6,
+                            ],
+                            6 => [
+                                'lower_limit' => 7.9,
+                                'upper_limit' => 10.9,
+                            ],
+                        ],
+                        2 => [
+                            3 => [
+                                'lower_limit' => 2.9,
+                                'upper_limit' => 4.8,
+                            ],
+                            4 => [
+                                'lower_limit' => 2.0,
+                                'upper_limit' => 3.3,
+                            ],
+                            5 => [
+                                'lower_limit' => 2.8,
+                                'upper_limit' => 4.4,
+                            ],
+                            6 => [
+                                'lower_limit' => 12.5,
+                                'upper_limit' => 18.0,
+                            ],
+                        ],
+                        3 => [
+                            4 => [
+                                'lower_limit' => 11.7,
+                                'upper_limit' => 15.0,
+                            ],
+                            5 => [
+                                'lower_limit' => 8.8,
+                                'upper_limit' => 10.6,
+                            ],
+                            6 => [
+                                'lower_limit' => 44.9,
+                                'upper_limit' => 50.7,
+                            ],
+                        ],
+                        4 => [
+                            5 => [
+                                'lower_limit' => 5.0,
+                                'upper_limit' => 6.1,
+                            ],
+                            6 => [
+                                'lower_limit' => 25.7,
+                                'upper_limit' => 29.3,
+                            ],
+                        ],
+                        5 => [
+                            6 => [
+                                'lower_limit' => 23.7,
+                                'upper_limit' => 25.5,
+                            ],
+                        ],
+                    ],
+                    'win' => [
+                        1 => 1.0,
+                        2 => 25.6,
+                        3 => 33.5,
+                        4 => 31.1,
+                        5 => 31.1,
+                        6 => 218.2,
+                    ],
+                    'place' => [
+                        1 => [
+                            'lower_limit' => 1.0,
+                            'upper_limit' => 1.0,
+                        ],
+                        2 => [
+                            'lower_limit' => 1.5,
+                            'upper_limit' => 20.9,
+                        ],
+                        3 => [
+                            'lower_limit' => 2.4,
+                            'upper_limit' => 37.8,
+                        ],
+                        4 => [
+                            'lower_limit' => 2.1,
+                            'upper_limit' => 33.3,
+                        ],
+                        5 => [
+                            'lower_limit' => 2.1,
+                            'upper_limit' => 33.3,
+                        ],
+                        6 => [
+                            'lower_limit' => 5.1,
+                            'upper_limit' => 86.6,
+                        ],
+                    ],
                 ],
             ],
             [
-                'arguments' => [Carbon::parse('2019-10-14'), 2, 1],
+                'arguments' => [
+                    Carbon::parse('2019-10-14'),
+                    2,
+                    1,
+                ],
                 'expected' => [
                     'date' => '2019-10-14',
                     'stadium_number' => 2,
-                    'number' => 1,
-                    'win_odds' => [
+                    'race_number' => 1,
+                    'trifecta' => [
+                        1 => [
+                            2 => [
+                                3 => null,
+                                4 => null,
+                                5 => null,
+                                6 => null,
+                            ],
+                            3 => [
+                                2 => null,
+                                4 => null,
+                                5 => null,
+                                6 => null,
+                            ],
+                            4 => [
+                                2 => null,
+                                3 => null,
+                                5 => null,
+                                6 => null,
+                            ],
+                            5 => [
+                                2 => null,
+                                3 => null,
+                                4 => null,
+                                6 => null,
+                            ],
+                            6 => [
+                                2 => null,
+                                3 => null,
+                                4 => null,
+                                5 => null,
+                            ],
+                        ],
+                        2 => [
+                            1 => [
+                                3 => null,
+                                4 => null,
+                                5 => null,
+                                6 => null,
+                            ],
+                            3 => [
+                                1 => null,
+                                4 => null,
+                                5 => null,
+                                6 => null,
+                            ],
+                            4 => [
+                                1 => null,
+                                3 => null,
+                                5 => null,
+                                6 => null,
+                            ],
+                            5 => [
+                                1 => null,
+                                3 => null,
+                                4 => null,
+                                6 => null,
+                            ],
+                            6 => [
+                                1 => null,
+                                3 => null,
+                                4 => null,
+                                5 => null,
+                            ],
+                        ],
+                        3 => [
+                            1 => [
+                                2 => null,
+                                4 => null,
+                                5 => null,
+                                6 => null,
+                            ],
+                            2 => [
+                                1 => null,
+                                4 => null,
+                                5 => null,
+                                6 => null,
+                            ],
+                            4 => [
+                                1 => null,
+                                2 => null,
+                                5 => null,
+                                6 => null,
+                            ],
+                            5 => [
+                                1 => null,
+                                2 => null,
+                                4 => null,
+                                6 => null,
+                            ],
+                            6 => [
+                                1 => null,
+                                2 => null,
+                                4 => null,
+                                5 => null,
+                            ],
+                        ],
+                        4 => [
+                            1 => [
+                                2 => null,
+                                3 => null,
+                                5 => null,
+                                6 => null,
+                            ],
+                            2 => [
+                                1 => null,
+                                3 => null,
+                                5 => null,
+                                6 => null,
+                            ],
+                            3 => [
+                                1 => null,
+                                2 => null,
+                                5 => null,
+                                6 => null,
+                            ],
+                            5 => [
+                                1 => null,
+                                2 => null,
+                                3 => null,
+                                6 => null,
+                            ],
+                            6 => [
+                                1 => null,
+                                2 => null,
+                                3 => null,
+                                5 => null,
+                            ],
+                        ],
+                        5 => [
+                            1 => [
+                                2 => null,
+                                3 => null,
+                                4 => null,
+                                6 => null,
+                            ],
+                            2 => [
+                                1 => null,
+                                3 => null,
+                                4 => null,
+                                6 => null,
+                            ],
+                            3 => [
+                                1 => null,
+                                2 => null,
+                                4 => null,
+                                6 => null,
+                            ],
+                            4 => [
+                                1 => null,
+                                2 => null,
+                                3 => null,
+                                6 => null,
+                            ],
+                            6 => [
+                                1 => null,
+                                2 => null,
+                                3 => null,
+                                4 => null,
+                            ],
+                        ],
+                        6 => [
+                            1 => [
+                                2 => null,
+                                3 => null,
+                                4 => null,
+                                5 => null,
+                            ],
+                            2 => [
+                                1 => null,
+                                3 => null,
+                                4 => null,
+                                5 => null,
+                            ],
+                            3 => [
+                                1 => null,
+                                2 => null,
+                                4 => null,
+                                5 => null,
+                            ],
+                            4 => [
+                                1 => null,
+                                2 => null,
+                                3 => null,
+                                5 => null,
+                            ],
+                            5 => [
+                                1 => null,
+                                2 => null,
+                                3 => null,
+                                4 => null,
+                            ],
+                        ],
+                    ],
+                    'trio' => [
+                        1 => [
+                            2 => [
+                                3 => null,
+                                4 => null,
+                                5 => null,
+                                6 => null,
+                            ],
+                            3 => [
+                                4 => null,
+                                5 => null,
+                                6 => null,
+                            ],
+                            4 => [
+                                5 => null,
+                                6 => null,
+                            ],
+                            5 => [
+                                6 => null,
+                            ],
+                        ],
+                        2 => [
+                            3 => [
+                                4 => null,
+                                5 => null,
+                                6 => null,
+                            ],
+                            4 => [
+                                5 => null,
+                                6 => null,
+                            ],
+                            5 => [
+                                6 => null,
+                            ],
+                        ],
+                        3 => [
+                            4 => [
+                                5 => null,
+                                6 => null,
+                            ],
+                            5 => [
+                                6 => null,
+                            ],
+                        ],
+                        4 => [
+                            5 => [
+                                6 => null,
+                            ],
+                        ],
+                    ],
+                    'exacta' => [
+                        1 => [
+                            2 => null,
+                            3 => null,
+                            4 => null,
+                            5 => null,
+                            6 => null,
+                        ],
+                        2 => [
+                            1 => null,
+                            3 => null,
+                            4 => null,
+                            5 => null,
+                            6 => null,
+                        ],
+                        3 => [
+                            1 => null,
+                            2 => null,
+                            4 => null,
+                            5 => null,
+                            6 => null,
+                        ],
+                        4 => [
+                            1 => null,
+                            2 => null,
+                            3 => null,
+                            5 => null,
+                            6 => null,
+                        ],
+                        5 => [
+                            1 => null,
+                            2 => null,
+                            3 => null,
+                            4 => null,
+                            6 => null,
+                        ],
+                        6 => [
+                            1 => null,
+                            2 => null,
+                            3 => null,
+                            4 => null,
+                            5 => null,
+                        ],
+                    ],
+                    'quinella' => [
+                        1 => [
+                            2 => null,
+                            3 => null,
+                            4 => null,
+                            5 => null,
+                            6 => null,
+                        ],
+                        2 => [
+                            3 => null,
+                            4 => null,
+                            5 => null,
+                            6 => null,
+                        ],
+                        3 => [
+                            4 => null,
+                            5 => null,
+                            6 => null,
+                        ],
+                        4 => [
+                            5 => null,
+                            6 => null,
+                        ],
+                        5 => [
+                            6 => null,
+                        ],
+                    ],
+                    'quinella_place' => [
+                        1 => [
+                            2 => [
+                                'lower_limit' => null,
+                                'upper_limit' => null,
+                            ],
+                            3 => [
+                                'lower_limit' => null,
+                                'upper_limit' => null,
+                            ],
+                            4 => [
+                                'lower_limit' => null,
+                                'upper_limit' => null,
+                            ],
+                            5 => [
+                                'lower_limit' => null,
+                                'upper_limit' => null,
+                            ],
+                            6 => [
+                                'lower_limit' => null,
+                                'upper_limit' => null,
+                            ],
+                        ],
+                        2 => [
+                            3 => [
+                                'lower_limit' => null,
+                                'upper_limit' => null,
+                            ],
+                            4 => [
+                                'lower_limit' => null,
+                                'upper_limit' => null,
+                            ],
+                            5 => [
+                                'lower_limit' => null,
+                                'upper_limit' => null,
+                            ],
+                            6 => [
+                                'lower_limit' => null,
+                                'upper_limit' => null,
+                            ],
+                        ],
+                        3 => [
+                            4 => [
+                                'lower_limit' => null,
+                                'upper_limit' => null,
+                            ],
+                            5 => [
+                                'lower_limit' => null,
+                                'upper_limit' => null,
+                            ],
+                            6 => [
+                                'lower_limit' => null,
+                                'upper_limit' => null,
+                            ],
+                        ],
+                        4 => [
+                            5 => [
+                                'lower_limit' => null,
+                                'upper_limit' => null,
+                            ],
+                            6 => [
+                                'lower_limit' => null,
+                                'upper_limit' => null,
+                            ],
+                        ],
+                        5 => [
+                            6 => [
+                                'lower_limit' => null,
+                                'upper_limit' => null,
+                            ],
+                        ],
+                    ],
+                    'win' => [
                         1 => null,
                         2 => null,
                         3 => null,
@@ -470,7 +865,7 @@ final class OddsScraperDataProvider
                         5 => null,
                         6 => null,
                     ],
-                    'place_odds' => [
+                    'place' => [
                         1 => [
                             'lower_limit' => null,
                             'upper_limit' => null,
@@ -494,393 +889,6 @@ final class OddsScraperDataProvider
                         6 => [
                             'lower_limit' => null,
                             'upper_limit' => null,
-                        ],
-                    ],
-                    'exacta_odds' => [
-                        1 => [
-                            2 => null,
-                            3 => null,
-                            4 => null,
-                            5 => null,
-                            6 => null,
-                        ],
-                        2 => [
-                            1 => null,
-                            3 => null,
-                            4 => null,
-                            5 => null,
-                            6 => null,
-                        ],
-                        3 => [
-                            1 => null,
-                            2 => null,
-                            4 => null,
-                            5 => null,
-                            6 => null,
-                        ],
-                        4 => [
-                            1 => null,
-                            2 => null,
-                            3 => null,
-                            5 => null,
-                            6 => null,
-                        ],
-                        5 => [
-                            1 => null,
-                            2 => null,
-                            3 => null,
-                            4 => null,
-                            6 => null,
-                        ],
-                        6 => [
-                            1 => null,
-                            2 => null,
-                            3 => null,
-                            4 => null,
-                            5 => null,
-                        ],
-                    ],
-                    'quinella_odds' => [
-                        1 => [
-                            2 => null,
-                            3 => null,
-                            4 => null,
-                            5 => null,
-                            6 => null,
-                        ],
-                        2 => [
-                            3 => null,
-                            4 => null,
-                            5 => null,
-                            6 => null,
-                        ],
-                        3 => [
-                            4 => null,
-                            5 => null,
-                            6 => null,
-                        ],
-                        4 => [
-                            5 => null,
-                            6 => null,
-                        ],
-                        5 => [
-                            6 => null,
-                        ],
-                    ],
-                    'quinella_place_odds' => [
-                        1 => [
-                            2 => [
-                                'lower_limit' => null,
-                                'upper_limit' => null,
-                            ],
-                            3 => [
-                                'lower_limit' => null,
-                                'upper_limit' => null,
-                            ],
-                            4 => [
-                                'lower_limit' => null,
-                                'upper_limit' => null,
-                            ],
-                            5 => [
-                                'lower_limit' => null,
-                                'upper_limit' => null,
-                            ],
-                            6 => [
-                                'lower_limit' => null,
-                                'upper_limit' => null,
-                            ],
-                        ],
-                        2 => [
-                            3 => [
-                                'lower_limit' => null,
-                                'upper_limit' => null,
-                            ],
-                            4 => [
-                                'lower_limit' => null,
-                                'upper_limit' => null,
-                            ],
-                            5 => [
-                                'lower_limit' => null,
-                                'upper_limit' => null,
-                            ],
-                            6 => [
-                                'lower_limit' => null,
-                                'upper_limit' => null,
-                            ],
-                        ],
-                        3 => [
-                            4 => [
-                                'lower_limit' => null,
-                                'upper_limit' => null,
-                            ],
-                            5 => [
-                                'lower_limit' => null,
-                                'upper_limit' => null,
-                            ],
-                            6 => [
-                                'lower_limit' => null,
-                                'upper_limit' => null,
-                            ],
-                        ],
-                        4 => [
-                            5 => [
-                                'lower_limit' => null,
-                                'upper_limit' => null,
-                            ],
-                            6 => [
-                                'lower_limit' => null,
-                                'upper_limit' => null,
-                            ],
-                        ],
-                        5 => [
-                            6 => [
-                                'lower_limit' => null,
-                                'upper_limit' => null,
-                            ],
-                        ],
-                    ],
-                    'trifecta_odds' => [
-                        1 => [
-                            2 => [
-                                3 => null,
-                                4 => null,
-                                5 => null,
-                                6 => null,
-                            ],
-                            3 => [
-                                2 => null,
-                                4 => null,
-                                5 => null,
-                                6 => null,
-                            ],
-                            4 => [
-                                2 => null,
-                                3 => null,
-                                5 => null,
-                                6 => null,
-                            ],
-                            5 => [
-                                2 => null,
-                                3 => null,
-                                4 => null,
-                                6 => null,
-                            ],
-                            6 => [
-                                2 => null,
-                                3 => null,
-                                4 => null,
-                                5 => null,
-                            ],
-                        ],
-                        2 => [
-                            1 => [
-                                3 => null,
-                                4 => null,
-                                5 => null,
-                                6 => null,
-                            ],
-                            3 => [
-                                1 => null,
-                                4 => null,
-                                5 => null,
-                                6 => null,
-                            ],
-                            4 => [
-                                1 => null,
-                                3 => null,
-                                5 => null,
-                                6 => null,
-                            ],
-                            5 => [
-                                1 => null,
-                                3 => null,
-                                4 => null,
-                                6 => null,
-                            ],
-                            6 => [
-                                1 => null,
-                                3 => null,
-                                4 => null,
-                                5 => null,
-                            ],
-                        ],
-                        3 => [
-                            1 => [
-                                2 => null,
-                                4 => null,
-                                5 => null,
-                                6 => null,
-                            ],
-                            2 => [
-                                1 => null,
-                                4 => null,
-                                5 => null,
-                                6 => null,
-                            ],
-                            4 => [
-                                1 => null,
-                                2 => null,
-                                5 => null,
-                                6 => null,
-                            ],
-                            5 => [
-                                1 => null,
-                                2 => null,
-                                4 => null,
-                                6 => null,
-                            ],
-                            6 => [
-                                1 => null,
-                                2 => null,
-                                4 => null,
-                                5 => null,
-                            ],
-                        ],
-                        4 => [
-                            1 => [
-                                2 => null,
-                                3 => null,
-                                5 => null,
-                                6 => null,
-                            ],
-                            2 => [
-                                1 => null,
-                                3 => null,
-                                5 => null,
-                                6 => null,
-                            ],
-                            3 => [
-                                1 => null,
-                                2 => null,
-                                5 => null,
-                                6 => null,
-                            ],
-                            5 => [
-                                1 => null,
-                                2 => null,
-                                3 => null,
-                                6 => null,
-                            ],
-                            6 => [
-                                1 => null,
-                                2 => null,
-                                3 => null,
-                                5 => null,
-                            ],
-                        ],
-                        5 => [
-                            1 => [
-                                2 => null,
-                                3 => null,
-                                4 => null,
-                                6 => null,
-                            ],
-                            2 => [
-                                1 => null,
-                                3 => null,
-                                4 => null,
-                                6 => null,
-                            ],
-                            3 => [
-                                1 => null,
-                                2 => null,
-                                4 => null,
-                                6 => null,
-                            ],
-                            4 => [
-                                1 => null,
-                                2 => null,
-                                3 => null,
-                                6 => null,
-                            ],
-                            6 => [
-                                1 => null,
-                                2 => null,
-                                3 => null,
-                                4 => null,
-                            ],
-                        ],
-                        6 => [
-                            1 => [
-                                2 => null,
-                                3 => null,
-                                4 => null,
-                                5 => null,
-                            ],
-                            2 => [
-                                1 => null,
-                                3 => null,
-                                4 => null,
-                                5 => null,
-                            ],
-                            3 => [
-                                1 => null,
-                                2 => null,
-                                4 => null,
-                                5 => null,
-                            ],
-                            4 => [
-                                1 => null,
-                                2 => null,
-                                3 => null,
-                                5 => null,
-                            ],
-                            5 => [
-                                1 => null,
-                                2 => null,
-                                3 => null,
-                                4 => null,
-                            ],
-                        ],
-                    ],
-                    'trio_odds' => [
-                        1 => [
-                            2 => [
-                                3 => null,
-                                4 => null,
-                                5 => null,
-                                6 => null,
-                            ],
-                            3 => [
-                                4 => null,
-                                5 => null,
-                                6 => null,
-                            ],
-                            4 => [
-                                5 => null,
-                                6 => null,
-                            ],
-                            5 => [
-                                6 => null,
-                            ],
-                        ],
-                        2 => [
-                            3 => [
-                                4 => null,
-                                5 => null,
-                                6 => null,
-                            ],
-                            4 => [
-                                5 => null,
-                                6 => null,
-                            ],
-                            5 => [
-                                6 => null,
-                            ],
-                        ],
-                        3 => [
-                            4 => [
-                                5 => null,
-                                6 => null,
-                            ],
-                            5 => [
-                                6 => null,
-                            ],
-                        ],
-                        4 => [
-                            5 => [
-                                6 => null,
-                            ],
                         ],
                     ],
                 ],

@@ -4,182 +4,177 @@ declare(strict_types=1);
 
 namespace BVP\Scraper\Scrapers;
 
-use BVP\Converter\Converter;
+use BVP\Scraper\Contracts\Scraper;
+use BVP\Scraper\Converters\Converter;
+use BVP\Scraper\Filters\Filter;
+use BVP\Scraper\Filters\WindDirectionFilter;
+use BVP\Scraper\Parsers\Parser;
+use BVP\Scraper\Parsers\ResultParser;
 use Carbon\CarbonInterface;
 use Symfony\Component\DomCrawler\Crawler;
 
 /**
  * @author shimomo
  */
-final class ResultScraper extends BaseScraper implements ResultScraperInterface
+final class ResultScraper extends BaseScraper implements Scraper
 {
     /**
-     * @psalm-var non-empty-string
-     *
-     * @var string
+     * @var non-empty-string
      */
     private string $baseXPath = 'descendant-or-self::body/main/div/div/div';
 
     /**
-     * @psalm-param \Carbon\CarbonInterface $date
-     * @psalm-param int<1, 24> $stadiumNumber
-     * @psalm-param int<1, 12> $number
-     * @psalm-return array<non-empty-string, mixed>
-     *
+     * @var int<0, 1>
+     */
+    private int $baseLevel = 0;
+
+    /**
      * @param \Carbon\CarbonInterface $date
-     * @param int $stadiumNumber
-     * @param int $number
-     * @return array
+     * @param int<1, 24> $stadiumNumber
+     * @param int<1, 12> $raceNumber
+     * @return array<non-empty-string, mixed>
      */
     #[\Override]
-    public function scrape(CarbonInterface $date, int $stadiumNumber, int $number): array
+    public function scrape(CarbonInterface $date, int $stadiumNumber, int $raceNumber): array
     {
-        $response = [];
-
         $scraperFormat = '%s/owpc/pc/race/raceresult?hd=%s&jcd=%02d&rno=%d';
-        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $number);
+        $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $raceNumber);
         $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
-        sleep($this->seconds);
 
         $levelFormat = '%s/div[2]/div[3]/ul/li';
         $levelXPath = sprintf($levelFormat, $this->baseXPath);
 
         $this->baseLevel = 0;
-        if ($this->filterXPath($scraper, $levelXPath) !== null) {
+        if (Filter::byXPath($scraper, $levelXPath) !== null) {
             $this->baseLevel = 1;
         }
 
-        $windSpeedFormat = '%s/div[2]/div[%s]/div[2]/div[1]/div[1]/div/div[1]/div[3]/div/span[2]';
-        $windDirectionNumberFormat = '%s/div[2]/div[%s]/div[2]/div[1]/div[1]/div/div[1]/div[4]/p';
-        $waveHeightFormat = '%s/div[2]/div[%s]/div[2]/div[1]/div[1]/div/div[1]/div[6]/div/span[2]';
-        $weatherNameFormat = '%s/div[2]/div[%s]/div[2]/div[1]/div[1]/div/div[1]/div[2]/div/span';
-        $airTemperatureFormat = '%s/div[2]/div[%s]/div[2]/div[1]/div[1]/div/div[1]/div[1]/div/span[2]';
-        $waterTemperatureFormat = '%s/div[2]/div[%s]/div[2]/div[1]/div[1]/div/div[1]/div[5]/div/span[2]';
-        $techniqueNameFormat = '%s/div[2]/div[%s]/div[2]/div[1]/div[2]/div[2]/table/tbody/tr/td';
-
+        $windSpeedFormat = '%s/div[2]/div[%d]/div[2]/div[1]/div[1]/div/div[1]/div[3]/div/span[2]';
         $windSpeedXPath = sprintf($windSpeedFormat, $this->baseXPath, $this->baseLevel + 6);
-        $windDirectionNumberXPath = sprintf($windDirectionNumberFormat, $this->baseXPath, $this->baseLevel + 6);
+        $windSpeed = ResultParser::parseWindSpeed(Filter::byXPath($scraper, $windSpeedXPath));
+
+        $windDirectionFormat = '%s/div[2]/div[%d]/div[2]/div[1]/div[1]/div/div[1]/div[4]/p';
+        $windDirectionXPath = sprintf($windDirectionFormat, $this->baseXPath, $this->baseLevel + 6);
+        $windDirection = ResultParser::parseWindDirection(WindDirectionFilter::byXPath($scraper, $windDirectionXPath));
+
+        $waveHeightFormat = '%s/div[2]/div[%d]/div[2]/div[1]/div[1]/div/div[1]/div[6]/div/span[2]';
         $waveHeightXPath = sprintf($waveHeightFormat, $this->baseXPath, $this->baseLevel + 6);
-        $weatherNameXPath = sprintf($weatherNameFormat, $this->baseXPath, $this->baseLevel + 6);
+        $waveHeight = ResultParser::parseWaveHeight(Filter::byXPath($scraper, $waveHeightXPath));
+
+        $weatherFormat = '%s/div[2]/div[%d]/div[2]/div[1]/div[1]/div/div[1]/div[2]/div/span';
+        $weatherXPath = sprintf($weatherFormat, $this->baseXPath, $this->baseLevel + 6);
+        $weather = ResultParser::parseWeather(Filter::byXPath($scraper, $weatherXPath));
+
+        $airTemperatureFormat = '%s/div[2]/div[%d]/div[2]/div[1]/div[1]/div/div[1]/div[1]/div/span[2]';
         $airTemperatureXPath = sprintf($airTemperatureFormat, $this->baseXPath, $this->baseLevel + 6);
+        $airTemperature = ResultParser::parseAirTemperature(Filter::byXPath($scraper, $airTemperatureXPath));
+
+        $waterTemperatureFormat = '%s/div[2]/div[%d]/div[2]/div[1]/div[1]/div/div[1]/div[5]/div/span[2]';
         $waterTemperatureXPath = sprintf($waterTemperatureFormat, $this->baseXPath, $this->baseLevel + 6);
-        $techniqueNameXPath = sprintf($techniqueNameFormat, $this->baseXPath, $this->baseLevel + 6);
+        $waterTemperature = ResultParser::parseWaterTemperature(Filter::byXPath($scraper, $waterTemperatureXPath));
 
-        $windSpeed = $this->filterXPath($scraper, $windSpeedXPath);
-        $windDirectionNumber = $this->filterXPathForWindDirectionNumber($scraper, $windDirectionNumberXPath);
-        $waveHeight = $this->filterXPath($scraper, $waveHeightXPath);
-        $weatherName = $this->filterXPath($scraper, $weatherNameXPath);
-        $airTemperature = $this->filterXPath($scraper, $airTemperatureXPath);
-        $waterTemperature = $this->filterXPath($scraper, $waterTemperatureXPath);
-        $techniqueName = $this->filterXPath($scraper, $techniqueNameXPath);
+        $techniqueFormat = '%s/div[2]/div[%d]/div[2]/div[1]/div[2]/div[2]/table/tbody/tr/td';
+        $techniqueXPath = sprintf($techniqueFormat, $this->baseXPath, $this->baseLevel + 6);
+        $technique = ResultParser::parseTechnique(Filter::byXPath($scraper, $techniqueXPath));
 
-        $windSpeed = Converter::parseWindSpeed($windSpeed);
-        $windDirectionNumber = Converter::parseWindDirectionNumber($windDirectionNumber);
-        $waveHeight = Converter::parseWaveHeight($waveHeight);
-        $weatherNumber = Converter::convertToWeatherNumber($weatherName);
-        $airTemperature = Converter::parseTemperature($airTemperature);
-        $waterTemperature = Converter::parseTemperature($waterTemperature);
-        $techniqueNumber = Converter::convertToTechniqueNumber($techniqueName);
+        $response = [];
 
         $response['date'] = $date->format('Y-m-d');
         $response['stadium_number'] = $stadiumNumber;
-        $response['number'] = $number;
-        $response['wind_speed'] = $windSpeed;
-        $response['wind_direction_number'] = $windDirectionNumber;
-        $response['wave_height'] = $waveHeight;
-        $response['weather_number'] = $weatherNumber;
-        $response['air_temperature'] = $airTemperature;
-        $response['water_temperature'] = $waterTemperature;
-        $response['technique_number'] = $techniqueNumber;
+        $response['race_number'] = $raceNumber;
 
-        $response += $this->scrapeBoats($scraper);
+        $response += $windSpeed;
+        $response += $windDirection;
+        $response += $waveHeight;
+        $response += $weather;
+        $response += $airTemperature;
+        $response += $waterTemperature;
+        $response += $technique;
+
+        $response += $this->scrapeRacers($scraper);
         $response += $this->scrapePayouts($scraper);
 
         return $response;
     }
 
     /**
-     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @psalm-return array<non-empty-string, mixed>
-     *
      * @param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @return array
+     * @return array<non-empty-string, mixed>
      */
-    private function scrapeBoats(Crawler $scraper): array
+    private function scrapeRacers(Crawler $scraper): array
     {
-        $response = [];
+        $response = ['racers' => []];
 
-        foreach (range(1, 6) as $boatNumber) {
-            $response['boats'][$boatNumber]['racer_boat_number'] = $boatNumber;
-            $response['boats'][$boatNumber]['racer_course_number'] = null;
-            $response['boats'][$boatNumber]['racer_start_timing'] = null;
-            $response['boats'][$boatNumber]['racer_place_number'] = null;
-            $response['boats'][$boatNumber]['racer_number'] = null;
-            $response['boats'][$boatNumber]['racer_name'] = null;
-        }
+        foreach (range(1, 6) as $index) {
+            $entryNumberFormat = '%s/div[2]/div[%d]/div[2]/div/table/tbody/tr[%s]/td/div/span[1]';
+            $entryNumberXPath = sprintf($entryNumberFormat, $this->baseXPath, $this->baseLevel + 5, $index);
+            $entryNumber = Parser::parseEntryNumber(Filter::byXPath($scraper, $entryNumberXPath));
 
-        $racerBoatNumberFormat = '%s/div[2]/div[%s]/div[2]/div/table/tbody/tr[%s]/td/div/span[1]';
-        $racerStartTimingFormat = '%s/div[2]/div[%s]/div[2]/div/table/tbody/tr[%s]/td/div/span[3]/span';
+            $course = ['course_number' => $index];
 
-        foreach (range(1, 6) as $courseNumber) {
-            $racerBoatNumberXPath = sprintf($racerBoatNumberFormat, $this->baseXPath, $this->baseLevel + 5, $courseNumber);
-            $racerStartTimingXPath = sprintf($racerStartTimingFormat, $this->baseXPath, $this->baseLevel + 5, $courseNumber);
+            $startTimingFormat = '%s/div[2]/div[%d]/div[2]/div/table/tbody/tr[%s]/td/div/span[3]/span';
+            $startTimingXPath = sprintf($startTimingFormat, $this->baseXPath, $this->baseLevel + 5, $index);
+            $startTiming = ResultParser::parseStartTiming(Filter::byXPath($scraper, $startTimingXPath));
 
-            $racerBoatNumber = $this->filterXPath($scraper, $racerBoatNumberXPath);
-            $racerStartTiming = $this->filterXPath($scraper, $racerStartTimingXPath);
+            if (!isset($entryNumber['entry_number'])) {
+                $entryNumber['entry_number'] = $index;
+                $course['course_number'] = null;
+            }
 
-            $racerCourseNumber = $courseNumber;
-            $racerBoatNumber = Converter::convertToInt($racerBoatNumber);
-            $racerStartTiming = Converter::parseStartTiming($racerStartTiming);
+            $entryNumberKey = $entryNumber['entry_number'];
 
-            if ($racerBoatNumber === null) {
+            if (!in_array($entryNumberKey, range(1, 6), true)) {
                 continue;
             }
 
-            $response['boats'][$racerBoatNumber]['racer_boat_number'] = $racerBoatNumber;
-            $response['boats'][$racerBoatNumber]['racer_course_number'] = $racerCourseNumber;
-            $response['boats'][$racerBoatNumber]['racer_start_timing'] = $racerStartTiming;
+            $response['racers'][$entryNumberKey] ??= [];
+            $response['racers'][$entryNumberKey] += $entryNumber;
+            $response['racers'][$entryNumberKey] += $course;
+            $response['racers'][$entryNumberKey] += $startTiming;
         }
 
-        $racerPlaceNameFormat = '%s/div[2]/div[%s]/div[1]/div/table/tbody[%s]/tr/td[1]';
-        $racerBoatNumberFormat = '%s/div[2]/div[%s]/div[1]/div/table/tbody[%s]/tr/td[2]';
-        $racerNumberFormat = '%s/div[2]/div[%s]/div[1]/div/table/tbody[%s]/tr/td[3]/span[1]';
-        $racerNameFormat = '%s/div[2]/div[%s]/div[1]/div/table/tbody[%s]/tr/td[3]/span[2]';
+        foreach (range(1, 6) as $index) {
+            $placeFormat = '%s/div[2]/div[%d]/div[1]/div/table/tbody[%s]/tr/td[1]';
+            $placeXPath = sprintf($placeFormat, $this->baseXPath, $this->baseLevel + 5, $index);
+            $place = ResultParser::parsePlace(Filter::byXPath($scraper, $placeXPath));
 
-        foreach (range(1, 6) as $placeNumber) {
-            $racerPlaceNameXPath = sprintf($racerPlaceNameFormat, $this->baseXPath, $this->baseLevel + 5, $placeNumber);
-            $racerBoatNumberXPath = sprintf($racerBoatNumberFormat, $this->baseXPath, $this->baseLevel + 5, $placeNumber);
-            $racerNumberXPath = sprintf($racerNumberFormat, $this->baseXPath, $this->baseLevel + 5, $placeNumber);
-            $racerNameXPath = sprintf($racerNameFormat, $this->baseXPath, $this->baseLevel + 5, $placeNumber);
+            $entryNumberFormat = '%s/div[2]/div[%d]/div[1]/div/table/tbody[%s]/tr/td[2]';
+            $entryNumberXPath = sprintf($entryNumberFormat, $this->baseXPath, $this->baseLevel + 5, $index);
+            $entryNumber = Parser::parseEntryNumber(Filter::byXPath($scraper, $entryNumberXPath));
 
-            $racerPlaceName = $this->filterXPath($scraper, $racerPlaceNameXPath);
-            $racerBoatNumber = $this->filterXPath($scraper, $racerBoatNumberXPath);
-            $racerNumber = $this->filterXPath($scraper, $racerNumberXPath);
-            $racerName = $this->filterXPath($scraper, $racerNameXPath);
+            $numberFormat = '%s/div[2]/div[%d]/div[1]/div/table/tbody[%s]/tr/td[3]/span[1]';
+            $numberXPath = sprintf($numberFormat, $this->baseXPath, $this->baseLevel + 5, $index);
+            $number = Parser::parseNumber(Filter::byXPath($scraper, $numberXPath));
 
-            $racerPlaceNumber = Converter::convertToPlaceNumber($racerPlaceName);
-            $racerBoatNumber = Converter::convertToInt($racerBoatNumber);
-            $racerNumber = Converter::convertToInt($racerNumber);
-            $racerName = Converter::convertToName($racerName);
+            $nameFormat = '%s/div[2]/div[%d]/div[1]/div/table/tbody[%s]/tr/td[3]/span[2]';
+            $nameXPath = sprintf($nameFormat, $this->baseXPath, $this->baseLevel + 5, $index);
+            $name = Parser::parseName(Filter::byXPath($scraper, $nameXPath));
 
-            if ($racerBoatNumber === null) {
+            if (!isset($entryNumber['entry_number'])) {
+                $entryNumber['entry_number'] = $index;
+            }
+
+            $entryNumberKey = $entryNumber['entry_number'];
+
+            if (!in_array($entryNumberKey, range(1, 6), true)) {
                 continue;
             }
 
-            $response['boats'][$racerBoatNumber]['racer_boat_number'] = $racerBoatNumber;
-            $response['boats'][$racerBoatNumber]['racer_place_number'] = $racerPlaceNumber;
-            $response['boats'][$racerBoatNumber]['racer_number'] = $racerNumber;
-            $response['boats'][$racerBoatNumber]['racer_name'] = $racerName;
+            $response['racers'][$entryNumberKey] ??= [];
+            $response['racers'][$entryNumberKey] += $entryNumber;
+            $response['racers'][$entryNumberKey] += $place;
+            $response['racers'][$entryNumberKey] += $number;
+            $response['racers'][$entryNumberKey] += $name;
         }
 
-        ksort($response['boats']);
+        ksort($response['racers'], SORT_NUMERIC);
 
         return $response;
     }
 
     /**
-     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @psalm-return array{
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @return array{
      *     payouts?: array{
      *         trifecta?: list<array{combination: non-empty-string, amount: int<0, max>}>,
      *         trio?: list<array{combination: non-empty-string, amount: int<0, max>}>,
@@ -190,27 +185,24 @@ final class ResultScraper extends BaseScraper implements ResultScraperInterface
      *         place?: list<array{combination: non-empty-string, amount: int<0, max>}>,
      *     }
      * }
-     *
-     * @param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @return array
      */
     private function scrapePayouts(Crawler $scraper): array
     {
         $response = [];
 
-        $scrapedCombinations = $this->filterAllCombinations($scraper);
-        $scrapedPayouts = $this->filterAllPayouts($scraper);
+        $combinations = $this->scrapeAllCombinations($scraper);
+        $amounts = $this->scrapeAllAmounts($scraper);
 
-        foreach ($scrapedCombinations as $betTypeName => $combinations) {
-            foreach ($combinations as $index => $combination) {
-                if (!isset($response['payouts'][$betTypeName])) {
-                    $response['payouts'][$betTypeName] = [];
+        foreach ($combinations as $name => $values) {
+            foreach ($values as $index => $value) {
+                if (!isset($response['payouts'][$name])) {
+                    $response['payouts'][$name] = [];
                 }
 
-                if ($combination !== '' && $scrapedPayouts[$betTypeName][$index] !== null) {
-                    $response['payouts'][$betTypeName][] = [
-                        'combination' => $combination,
-                        'amount' => $scrapedPayouts[$betTypeName][$index],
+                if ($value !== '' && $amounts[$name][$index] !== null) {
+                    $response['payouts'][$name][] = [
+                        'combination' => $value,
+                        'amount' => $amounts[$name][$index],
                     ];
                 }
             }
@@ -220,8 +212,8 @@ final class ResultScraper extends BaseScraper implements ResultScraperInterface
     }
 
     /**
-     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @psalm-return array{
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @return array{
      *     trifecta: list<string>,
      *     trio: list<string>,
      *     exacta: list<string>,
@@ -230,156 +222,62 @@ final class ResultScraper extends BaseScraper implements ResultScraperInterface
      *     win: list<string>,
      *     place: list<string>,
      * }
-     *
-     * @param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @return array
      */
-    private function filterAllCombinations(Crawler $scraper): array
+    private function scrapeAllCombinations(Crawler $scraper): array
     {
-        $trifectaTemplates = [
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[1]/tr[1]/td[2]/div/div/span[%d]',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[1]/tr[2]/td[1]/div/div/span[%d]',
+        return [
+            'trifecta' => $this->scrapeCombinations($scraper, [
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[1]/tr[1]/td[2]/div/div/span[%d]',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[1]/tr[2]/td[1]/div/div/span[%d]',
+            ], range(1, 5)),
+            'trio' => $this->scrapeCombinations($scraper, [
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[2]/tr[1]/td[2]/div/div/span[%d]',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[2]/tr[2]/td[1]/div/div/span[%d]',
+            ], range(1, 5)),
+            'exacta' => $this->scrapeCombinations($scraper, [
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[3]/tr[1]/td[2]/div/div/span[%d]',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[3]/tr[2]/td[1]/div/div/span[%d]',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[3]/tr[3]/td[1]/div/div/span[%d]',
+            ], range(1, 3)),
+            'quinella' => $this->scrapeCombinations($scraper, [
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[4]/tr[1]/td[2]/div/div/span[%d]',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[4]/tr[2]/td[1]/div/div/span[%d]',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[4]/tr[3]/td[1]/div/div/span[%d]',
+            ], range(1, 3)),
+            'quinella_place' => $this->scrapeCombinations($scraper, [
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[5]/tr[1]/td[2]/div/div/span[%d]',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[5]/tr[2]/td[1]/div/div/span[%d]',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[5]/tr[3]/td[1]/div/div/span[%d]',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[5]/tr[4]/td[1]/div/div/span[%d]',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[5]/tr[5]/td[1]/div/div/span[%d]',
+            ], range(1, 3)),
+            'win' => $this->scrapeCombinations($scraper, [
+                '%s//div[2]/div[%d]/div[1]/div/table/tbody[6]/tr[1]/td[2]/div/div/span[%d]',
+                '%s//div[2]/div[%d]/div[1]/div/table/tbody[6]/tr[2]/td[1]/div/div/span[%d]',
+            ], range(1, 1)),
+            'place' => $this->scrapeCombinations($scraper, [
+                '%s//div[2]/div[%d]/div[1]/div/table/tbody[7]/tr[1]/td[2]/div/div/span[%d]',
+                '%s//div[2]/div[%d]/div[1]/div/table/tbody[7]/tr[2]/td[1]/div/div/span[%d]',
+                '%s//div[2]/div[%d]/div[1]/div/table/tbody[7]/tr[3]/td[1]/div/div/span[%d]',
+            ], range(1, 1)),
         ];
-
-        $trioTemplates = [
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[2]/tr[1]/td[2]/div/div/span[%d]',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[2]/tr[2]/td[1]/div/div/span[%d]',
-        ];
-
-        $exactaTemplates = [
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[3]/tr[1]/td[2]/div/div/span[%d]',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[3]/tr[2]/td[1]/div/div/span[%d]',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[3]/tr[3]/td[1]/div/div/span[%d]',
-        ];
-
-        $quinellaTemplates = [
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[4]/tr[1]/td[2]/div/div/span[%d]',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[4]/tr[2]/td[1]/div/div/span[%d]',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[4]/tr[3]/td[1]/div/div/span[%d]',
-        ];
-
-        $quinellaPlaceTemplates = [
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[1]/td[2]/div/div/span[%d]',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[2]/td[1]/div/div/span[%d]',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[3]/td[1]/div/div/span[%d]',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[4]/td[1]/div/div/span[%d]',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[5]/td[1]/div/div/span[%d]',
-        ];
-
-        $winTemplates = [
-            '%s//div[2]/div[6]/div[1]/div/table/tbody[6]/tr[1]/td[2]/div/div/span[%d]',
-            '%s//div[2]/div[6]/div[1]/div/table/tbody[6]/tr[2]/td[1]/div/div/span[%d]',
-        ];
-
-        $placeTemplates = [
-            '%s//div[2]/div[6]/div[1]/div/table/tbody[7]/tr[1]/td[2]/div/div/span[%d]',
-            '%s//div[2]/div[6]/div[1]/div/table/tbody[7]/tr[2]/td[1]/div/div/span[%d]',
-            '%s//div[2]/div[6]/div[1]/div/table/tbody[7]/tr[3]/td[1]/div/div/span[%d]',
-        ];
-
-        $trifecta = $this->filterCombinations($scraper, $trifectaTemplates, 1, 5);
-        $trio = $this->filterCombinations($scraper, $trioTemplates, 1, 5);
-        $exacta = $this->filterCombinations($scraper, $exactaTemplates, 1, 3);
-        $quinella = $this->filterCombinations($scraper, $quinellaTemplates, 1, 3);
-        $quinella_place = $this->filterCombinations($scraper, $quinellaPlaceTemplates, 1, 3);
-        $win = $this->filterCombinations($scraper, $winTemplates, 1, 1);
-        $place = $this->filterCombinations($scraper, $placeTemplates, 1, 1);
-
-        return compact('trifecta', 'trio', 'exacta', 'quinella', 'quinella_place', 'win', 'place');
     }
 
     /**
-     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @psalm-return array{
-     *     trifecta: list<?int<0, max>>,
-     *     trio: list<?int<0, max>>,
-     *     exacta: list<?int<0, max>>,
-     *     quinella: list<?int<0, max>>,
-     *     quinella_place: list<?int<0, max>>,
-     *     win: list<?int<0, max>>,
-     *     place: list<?int<0, max>>,
-     * }
-     *
      * @param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @return array
+     * @param list<non-empty-string> $templates
+     * @param list<int> $indexes
+     * @return list<string>
      */
-    private function filterAllPayouts(Crawler $scraper): array
-    {
-        $trifectaTemplates = [
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[1]/tr[1]/td[3]/span',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[1]/tr[2]/td[2]/span',
-        ];
-
-        $trioTemplates = [
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[2]/tr[1]/td[3]/span',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[2]/tr[2]/td[2]/span',
-        ];
-
-        $exactaTemplates = [
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[3]/tr[1]/td[3]/span',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[3]/tr[2]/td[2]/span',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[3]/tr[3]/td[2]/span',
-        ];
-
-        $quinellaTemplates = [
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[4]/tr[1]/td[3]/span',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[4]/tr[2]/td[2]/span',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[4]/tr[3]/td[2]/span',
-        ];
-
-        $quinellaPlaceTemplates = [
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[1]/td[3]/span',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[2]/td[2]/span',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[3]/td[2]/span',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[4]/td[2]/span',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[5]/tr[5]/td[2]/span',
-        ];
-
-        $winTemplates = [
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[6]/tr[1]/td[3]/span',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[6]/tr[2]/td[2]/span',
-        ];
-
-        $placeTemplates = [
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[7]/tr[1]/td[3]/span',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[7]/tr[2]/td[2]/span',
-            '%s/div[2]/div[6]/div[1]/div/table/tbody[7]/tr[3]/td[2]/span',
-        ];
-
-        $trifecta = $this->filterPayouts($scraper, $trifectaTemplates);
-        $trio = $this->filterPayouts($scraper, $trioTemplates);
-        $exacta = $this->filterPayouts($scraper, $exactaTemplates);
-        $quinella = $this->filterPayouts($scraper, $quinellaTemplates);
-        $quinella_place = $this->filterPayouts($scraper, $quinellaPlaceTemplates);
-        $win = $this->filterPayouts($scraper, $winTemplates);
-        $place = $this->filterPayouts($scraper, $placeTemplates);
-
-        return compact('trifecta', 'trio', 'exacta', 'quinella', 'quinella_place', 'win', 'place');
-    }
-
-    /**
-     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @psalm-param list<non-empty-string> $templates
-     * @psalm-param int<0, max> $first
-     * @psalm-param int<0, max> $last
-     * @psalm-return list<string>
-     *
-     * @param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @param array $templates
-     * @param int $first
-     * @param int $last
-     * @return array
-     */
-    private function filterCombinations(Crawler $scraper, array $templates, int $first, int $last): array
+    private function scrapeCombinations(Crawler $scraper, array $templates, array $indexes): array
     {
         $response = [];
+
         foreach ($templates as $template) {
             $values = [];
-            foreach (range($first, $last) as $index) {
-                $values[] = $this->filterXPath(
-                    $scraper,
-                    sprintf($template, $this->baseXPath, $index)
-                );
+
+            foreach ($indexes as $index) {
+                $values[] = Filter::byXPath($scraper, sprintf($template, $this->baseXPath, $this->baseLevel + 6, $index));
             }
 
             $response[] = implode($values);
@@ -389,21 +287,72 @@ final class ResultScraper extends BaseScraper implements ResultScraperInterface
     }
 
     /**
-     * @psalm-param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @psalm-param list<non-empty-string> $templates
-     * @psalm-return list<?int<0, max>>
-     *
      * @param \Symfony\Component\DomCrawler\Crawler $scraper
-     * @param array $templates
-     * @return array
+     * @return array{
+     *     trifecta: list<?int<0, max>>,
+     *     trio: list<?int<0, max>>,
+     *     exacta: list<?int<0, max>>,
+     *     quinella: list<?int<0, max>>,
+     *     quinella_place: list<?int<0, max>>,
+     *     win: list<?int<0, max>>,
+     *     place: list<?int<0, max>>,
+     * }
      */
-    private function filterPayouts(Crawler $scraper, array $templates): array
+    private function scrapeAllAmounts(Crawler $scraper): array
     {
-        return array_map(function (string $template) use ($scraper) {
-            $value = $this->filterXPath($scraper, sprintf($template, $this->baseXPath));
+        return [
+            'trifecta' => $this->scrapeAmounts($scraper, [
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[1]/tr[1]/td[3]/span',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[1]/tr[2]/td[2]/span',
+            ]),
+            'trio' => $this->scrapeAmounts($scraper, [
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[2]/tr[1]/td[3]/span',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[2]/tr[2]/td[2]/span',
+            ]),
+            'exacta' => $this->scrapeAmounts($scraper, [
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[3]/tr[1]/td[3]/span',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[3]/tr[2]/td[2]/span',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[3]/tr[3]/td[2]/span',
+            ]),
+            'quinella' => $this->scrapeAmounts($scraper, [
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[4]/tr[1]/td[3]/span',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[4]/tr[2]/td[2]/span',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[4]/tr[3]/td[2]/span',
+            ]),
+            'quinella_place' => $this->scrapeAmounts($scraper, [
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[5]/tr[1]/td[3]/span',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[5]/tr[2]/td[2]/span',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[5]/tr[3]/td[2]/span',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[5]/tr[4]/td[2]/span',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[5]/tr[5]/td[2]/span',
+            ]),
+            'win' => $this->scrapeAmounts($scraper, [
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[6]/tr[1]/td[3]/span',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[6]/tr[2]/td[2]/span',
+            ]),
+            'place' => $this->scrapeAmounts($scraper, [
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[7]/tr[1]/td[3]/span',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[7]/tr[2]/td[2]/span',
+                '%s/div[2]/div[%d]/div[1]/div/table/tbody[7]/tr[3]/td[2]/span',
+            ]),
+        ];
+    }
+
+    /**
+     * @param \Symfony\Component\DomCrawler\Crawler $scraper
+     * @param list<non-empty-string> $templates
+     * @return list<?int<0, max>>
+     */
+    private function scrapeAmounts(Crawler $scraper, array $templates): array
+    {
+        return array_map(function (string $template) use ($scraper): ?int {
+            $value = Filter::byXPath($scraper, sprintf($template, $this->baseXPath, $this->baseLevel + 6));
+
             $value = str_replace(',', '', str_replace('¥', '', $value ?? ''));
-            $value = Converter::convertToInt($value);
-            return $value >= 0 ? $value : null;
+
+            $value = Converter::toInt($value);
+
+            return $value !== null && $value >= 0 ? $value : null;
         }, $templates);
     }
 }
