@@ -8,10 +8,14 @@ use Carbon\CarbonImmutable as Carbon;
 use Carbon\CarbonInterface;
 
 /**
- * Races on boatrace.jp are finalized same-day and never revised afterwards,
- * so anything strictly before "today" (in $timezone) is treated as immutable
- * and cacheable forever; today/future dates are never cached, since programs,
- * previews, and odds for them can still change between calls.
+ * Races on boatrace.jp are finalized same-day and are revised again only in
+ * rare cases (e.g. a post-hoc official correction), so anything strictly
+ * before "today" (in $timezone) is treated as immutable and cacheable
+ * forever; today/future dates are never cached, since programs, previews,
+ * and odds for them can still change between calls. Callers who know a
+ * specific past race was corrected can pass `forceRefresh: true` to
+ * {@see \BVP\Scraper\Scraper}'s scrape*() methods to bypass and overwrite a
+ * stale cache entry.
  *
  * @author shimomo
  */
