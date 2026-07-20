@@ -24,11 +24,6 @@ use Symfony\Component\DomCrawler\Crawler;
 final class OddsScraper extends BaseScraper implements Scraper
 {
     /**
-     * @var non-empty-string
-     */
-    private string $baseXPath = 'descendant-or-self::body/main/div/div/div';
-
-    /**
      * @var int<0, 1>
      */
     private int $baseLevel = 0;
@@ -76,7 +71,7 @@ final class OddsScraper extends BaseScraper implements Scraper
     {
         $scraperFormat = '%s/owpc/pc/race/odds3t?hd=%s&jcd=%02d&rno=%d';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $raceNumber);
-        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
+        $scraper = $this->requestAndAssertPage('GET', $scraperUrl);
 
         $this->resolveBaseLevel($scraper);
 
@@ -139,7 +134,7 @@ final class OddsScraper extends BaseScraper implements Scraper
     {
         $scraperFormat = '%s/owpc/pc/race/odds3f?hd=%s&jcd=%02d&rno=%d';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $raceNumber);
-        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
+        $scraper = $this->requestAndAssertPage('GET', $scraperUrl);
 
         $this->resolveBaseLevel($scraper);
 
@@ -214,7 +209,7 @@ final class OddsScraper extends BaseScraper implements Scraper
     {
         $scraperFormat = '%s/owpc/pc/race/odds2tf?hd=%s&jcd=%02d&rno=%d';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $raceNumber);
-        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
+        $scraper = $this->requestAndAssertPage('GET', $scraperUrl);
 
         $this->resolveBaseLevel($scraper);
 
@@ -275,7 +270,7 @@ final class OddsScraper extends BaseScraper implements Scraper
     {
         $scraperFormat = '%s/owpc/pc/race/oddsk?hd=%s&jcd=%02d&rno=%d';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $raceNumber);
-        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
+        $scraper = $this->requestAndAssertPage('GET', $scraperUrl);
 
         $this->resolveBaseLevel($scraper);
 
@@ -343,7 +338,7 @@ final class OddsScraper extends BaseScraper implements Scraper
     {
         $scraperFormat = '%s/owpc/pc/race/oddstf?hd=%s&jcd=%02d&rno=%d';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $raceNumber);
-        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
+        $scraper = $this->requestAndAssertPage('GET', $scraperUrl);
 
         $this->resolveBaseLevel($scraper);
 

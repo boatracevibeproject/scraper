@@ -18,11 +18,6 @@ use Symfony\Component\DomCrawler\Crawler;
 final class PreviewScraper extends BaseScraper implements Scraper
 {
     /**
-     * @var non-empty-string
-     */
-    private string $baseXPath = 'descendant-or-self::body/main/div/div/div';
-
-    /**
      * @var int<0, 1>
      */
     private int $baseLevel = 0;
@@ -38,7 +33,7 @@ final class PreviewScraper extends BaseScraper implements Scraper
     {
         $scraperFormat = '%s/owpc/pc/race/beforeinfo?hd=%s&jcd=%02d&rno=%d';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'), $stadiumNumber, $raceNumber);
-        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
+        $scraper = $this->requestAndAssertPage('GET', $scraperUrl);
 
         $levelFormat = '%s/div[2]/div[3]/ul/li';
         $levelXPath = sprintf($levelFormat, $this->baseXPath);

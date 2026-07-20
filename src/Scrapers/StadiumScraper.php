@@ -24,7 +24,7 @@ final class StadiumScraper extends BaseScraper implements StadiumScraperContract
     {
         $scraperFormat = '%s/owpc/pc/race/index?hd=%s';
         $scraperUrl = sprintf($scraperFormat, $this->baseUrl, $date->format('Ymd'));
-        $scraper = $this->requestAndClearCookies('GET', $scraperUrl);
+        $scraper = $this->requestAndAssertPage('GET', $scraperUrl);
         $scraper = $scraper->filter('.table1')->eq(0);
         $scraper = $scraper->filter('table tbody td.is-arrow1.is-fBold.is-fs15');
 
