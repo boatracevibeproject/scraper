@@ -1,4 +1,4 @@
-name: test
+name: Test
 
 on:
   push:
@@ -10,13 +10,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  tests:
-    name: PHPUnit ${{ matrix.phpunit-version }} on PHP ${{ matrix.php-version }} (Ubuntu 24.04)
+  test:
+    name: PHPUnit ${{ matrix.phpunit-version }} on PHP ${{ matrix.php-version }} (${{ matrix.dependency-version }}, Ubuntu 24.04)
     runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      id-token: write
     strategy:
+      fail-fast: false
       matrix:
         php-version:
           - '8.2'
@@ -24,36 +22,32 @@ jobs:
           - '8.4'
           - '8.5'
         phpunit-version:
-          - '10.1'
-          - '11.1'
-          - '12.0'
+          - '11.5.50'
+          - '12.5.8'
+          - '13.0'
+        dependency-version:
+          - prefer-lowest
+          - prefer-stable
         exclude:
           - php-version: '8.2'
-            phpunit-version: '12.0'
+            phpunit-version: '12.5.8'
+          - php-version: '8.2'
+            phpunit-version: '13.0'
+          - php-version: '8.3'
+            phpunit-version: '13.0'
     steps:
       - name: Setup PHP ${{ matrix.php-version }}
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
-          coverage: pcov
 
-      - name: Checkout Repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-      - name: Require PHPUnit ${{ matrix.phpunit-version }}
-        run: composer require --dev phpunit/phpunit:^${{ matrix.phpunit-version }} --with-all-dependencies
-
-      - name: Install Dependencies
-        run: composer update --prefer-dist --no-interaction --no-progress
-
-      - name: Run PHP_CodeSniffer
-        run: vendor/bin/phpcs --standard=phpcs.xml.dist
+      - name: Install dependencies
+        run: composer update --${{ matrix.dependency-version }} --prefer-dist --no-interaction --no-progress --with="phpunit/phpunit:${{ matrix.phpunit-version }}"
 
       - name: Run PHPUnit ${{ matrix.phpunit-version }}
-        run: vendor/bin/phpunit --configuration=phpunit.xml.dist --coverage-xml=build/coverage-xml
-
-      - name: Upload Code Coverage to Codecov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: build/coverage-xml/coverage.xml
+        run: vendor/bin/phpunit --configuration=phpunit.xml.dist --no-progress
