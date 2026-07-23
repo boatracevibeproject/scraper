@@ -21,7 +21,7 @@ final class ThrottleRateLimiter implements RateLimiterInterface
     /**
      * @var float
      */
-    private const float DEFAULT_MIN_CALL_INTERVAL_SECONDS = 3.0;
+    private const float DEFAULT_MIN_CALL_INTERVAL_SECONDS = 1.0;
 
     /**
      * @var float
@@ -38,8 +38,8 @@ final class ThrottleRateLimiter implements RateLimiterInterface
      */
     public function __construct(float $minCallIntervalSeconds = self::DEFAULT_MIN_CALL_INTERVAL_SECONDS)
     {
-        if ($minCallIntervalSeconds < 0.0) {
-            throw new InvalidArgumentException('$minCallIntervalSeconds must be 0 or greater.');
+        if ($minCallIntervalSeconds < 1.0) {
+            throw new InvalidArgumentException('$minCallIntervalSeconds must be 1 or greater.');
         }
 
         $this->minCallIntervalSeconds = $minCallIntervalSeconds;

@@ -26,7 +26,7 @@ final class ThrottleRateLimiterTest extends TestCase
 
     public function testSecondCallWithinIntervalBlocksForRemainingTime(): void
     {
-        $rateLimiter = new ThrottleRateLimiter(0.2);
+        $rateLimiter = new ThrottleRateLimiter(1.0);
 
         $rateLimiter->throttle();
 
@@ -34,13 +34,13 @@ final class ThrottleRateLimiterTest extends TestCase
         $rateLimiter->throttle();
         $elapsedSeconds = microtime(true) - $startedAt;
 
-        $this->assertGreaterThanOrEqual(0.15, $elapsedSeconds);
+        $this->assertGreaterThanOrEqual(0.95, $elapsedSeconds);
     }
 
     public function testIndependentInstancesDoNotShareState(): void
     {
-        $slow = new ThrottleRateLimiter(0.3);
-        $fast = new ThrottleRateLimiter(0.0);
+        $slow = new ThrottleRateLimiter(1.5);
+        $fast = new ThrottleRateLimiter(1.0);
 
         $slow->throttle();
 
@@ -63,5 +63,12 @@ final class ThrottleRateLimiterTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         new ThrottleRateLimiter(-1.0);
+    }
+
+    public function testIntervalBelowMinimumIsRejected(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new ThrottleRateLimiter(0.5);
     }
 }
