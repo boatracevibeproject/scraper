@@ -1,29 +1,31 @@
-# Scraper for Boatrace Venture Project
+# Scraper
 
-[![security](https://github.com/shimomo/bvp-scraper/actions/workflows/security.yml/badge.svg)](https://github.com/shimomo/bvp-scraper/actions/workflows/security.yml)
+[![php](https://poser.pugx.org/bvp/prefecture/require/php)](https://packagist.org/packages/bvp/prefecture)
+[![stable](https://poser.pugx.org/bvp/prefecture/v/stable)](https://packagist.org/packages/bvp/prefecture)
+[![license](https://poser.pugx.org/bvp/prefecture/license)](https://packagist.org/packages/bvp/prefecture)
+
 [![test](https://github.com/shimomo/bvp-scraper/actions/workflows/test.yml/badge.svg)](https://github.com/shimomo/bvp-scraper/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/shimomo/bvp-scraper/graph/badge.svg?token=1J6TVAC5FR)](https://codecov.io/gh/shimomo/bvp-scraper)
-[![php](https://poser.pugx.org/bvp/scraper/require/php)](https://packagist.org/packages/bvp/scraper)
-[![stable](https://poser.pugx.org/bvp/scraper/v/stable)](https://packagist.org/packages/bvp/scraper)
-[![license](https://poser.pugx.org/bvp/scraper/license)](https://packagist.org/packages/bvp/scraper)
+[![psalm](https://github.com/boatracevibeproject/scraper/actions/workflows/psalm.yml/badge.svg)](https://github.com/boatracevibeproject/scraper/actions/workflows/psalm.yml)
+[![audit](https://github.com/boatracevibeproject/scraper/actions/workflows/audit.yml/badge.svg)](https://github.com/boatracevibeproject/scraper/actions/workflows/audit.yml)
+[![keepalive](https://github.com/boatracevibeproject/scraper/actions/workflows/keepalive.yml/badge.svg)](https://github.com/boatracevibeproject/scraper/actions/workflows/keepalive.yml)
+[![dependabot-updates](https://github.com/boatracevibeproject/scraper/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/boatracevibeproject/scraper/actions/workflows/dependabot/dependabot-updates)
 
 BVP Scraper は、ボートレースの公式サイトから出走表、直前情報、オッズ、結果をスクレイピングするための PHP ライブラリです。
 
-v10 では、後継ライブラリである [turnmark/scraper](https://github.com/turnmark/turnmark) とは異なる方向性を持つ派生として、以下の3点に力を入れています。
+v10 では、後継ライブラリである [turnmark/scraper](https://github.com/turnmark/turnmark) とは異なる方向性を持つ派生として、以下の 2 点に力を入れています。
 
-- **自己完結**: `bvp/converter`・`bvp/trimmer` への外部依存を廃し、変換・ドメインモデル（Enum）を内製化。
-- **インスタンス単位の並行実行**: レート制御・キャッシュ参照をインスタンススコープに保持するため、プロキシやワーカーごとに複数の `Scraper` インスタンスを同一プロセス内で干渉なく並行運用できます。
 - **鮮度に応じたキャッシュ**: 確定済みの過去日のレースは不変とみなし、キャッシュに永続化。バックフィル用途で同じ日付を何度も取り直す必要がなくなります。
+- **インスタンス単位の並行実行**: レート制御・キャッシュ参照をインスタンススコープに保持するため、プロキシやワーカーごとに複数の `Scraper` インスタンスを同一プロセス内で干渉なく並行運用できます。
 
 ## 📦 Requirements
 
-- php: ^8.2
+- php: ^8.3
 - nesbot/carbon: ^2.63 || ^3.0
 - psr/simple-cache: ^3.0
-- symfony/browser-kit: ^6.0 || ^7.0 || ^8.0
-- symfony/cache: ^6.0 || ^7.0 || ^8.0
-- symfony/css-selector: ^6.0 || ^7.0 || ^8.0
-- symfony/http-client: ^6.0 || ^7.0 || ^8.0
+- symfony/browser-kit: ^7.0 || ^8.0
+- symfony/cache: ^7.0 || ^8.0
+- symfony/css-selector: ^7.0 || ^8.0
+- symfony/http-client: ^7.0 || ^8.0
 
 ## 💾 Installation
 
@@ -175,7 +177,7 @@ $scraperB = new Scraper(
 
 ## ⚠️ Notes
 
-- v10 は v6 系との後方互換性を意図的に持たない大きな設計変更（インスタンスベース API・レスポンススキーマの変更）を含みます。既存の利用箇所は `bvp/scraper: ^6.0` に固定してください。
+- v10 は v6 との後方互換性を意図的に持たない大きな設計変更（インスタンスベース API・レスポンススキーマの変更）を含みます。既存の利用箇所は `bvp/scraper: ^6.0` に固定してください。
 - **スクレイピング対象の公式サイトの構造が変更された場合**、正しくデータを取得できなくなる可能性があります。
 - 利用時は対象サイトの利用規約を遵守してください。
 
