@@ -26,13 +26,13 @@ final class CacheKeyFactory
         int $raceNumber,
         ?string $betType = null,
     ): string {
-        $segments = [$type, $date->format('Ymd'), (string) $stadiumNumber, (string) $raceNumber];
+        $key = $type . '.' . $date->format('Ymd') . '.' . $stadiumNumber . '.' . $raceNumber;
 
         if ($betType !== null) {
-            $segments[] = $betType;
+            $key .= '.' . $betType;
         }
 
-        return implode('.', $segments);
+        return $key;
     }
 
     /**
@@ -41,6 +41,6 @@ final class CacheKeyFactory
      */
     public static function makeForStadium(CarbonInterface $date): string
     {
-        return implode('.', ['stadium', $date->format('Ymd')]);
+        return 'stadium.' . $date->format('Ymd');
     }
 }
