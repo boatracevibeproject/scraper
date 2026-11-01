@@ -402,6 +402,11 @@ final class ResultScraper extends BaseScraper implements ResultScraperInterface
         return array_map(function (string $template) use ($scraper) {
             $value = $this->filterXPath($scraper, sprintf($template, $this->baseXPath));
             $value = str_replace(',', '', str_replace('¥', '', $value ?? ''));
+            // The official result sometimes lists a combination with a blank amount.
+            if (!ctype_digit($value)) {
+                return null;
+            }
+
             $value = Converter::convertToInt($value);
             return $value >= 0 ? $value : null;
         }, $templates);
