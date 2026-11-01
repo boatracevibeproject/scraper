@@ -122,6 +122,11 @@ class PreviewScraper extends BaseScraper implements PreviewScraperInterface
             $racerBoatNumber = Converter::convertToInt($racerBoatNumber);
             $racerStartTiming = Converter::parseStartTiming($racerStartTiming);
 
+            // An empty row (a boat skipped the start exhibition) converts to 0.
+            if ($racerBoatNumber < 1 || $racerBoatNumber > 6) {
+                continue;
+            }
+
             $response['boats'][$racerBoatNumber]['racer_boat_number'] = $racerBoatNumber;
             $response['boats'][$racerBoatNumber]['racer_course_number'] = $racerCourseNumber;
             $response['boats'][$racerBoatNumber]['racer_start_timing'] = $racerStartTiming;
@@ -155,6 +160,10 @@ class PreviewScraper extends BaseScraper implements PreviewScraperInterface
             $racerWeightAdjustment = Converter::convertToFloat($racerWeightAdjustment);
             $racerExhibitionTime = Converter::convertToFloat($racerExhibitionTime);
             $racerTiltAdjustment = Converter::convertToFloat($racerTiltAdjustment);
+
+            if ($racerBoatNumber < 1 || $racerBoatNumber > 6) {
+                continue;
+            }
 
             $response['boats'][$racerBoatNumber]['racer_boat_number'] = $racerBoatNumber;
             $response['boats'][$racerBoatNumber]['racer_weight'] = $racerWeight;
