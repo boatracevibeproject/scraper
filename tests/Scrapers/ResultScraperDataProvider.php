@@ -222,6 +222,123 @@ final class ResultScraperDataProvider
                     ],
                 ],
             ],
+            [
+                'arguments' => [Carbon::parse('2025-05-03'), 8, 9],
+                'expected' => [
+                    'date' => '2025-05-03',
+                    'stadium_number' => 8,
+                    'number' => 9,
+                    'wind_speed' => 2,
+                    'wind_direction_number' => 7,
+                    'wave_height' => 0,
+                    'weather_number' => 1,
+                    'air_temperature' => 19.0,
+                    'water_temperature' => 18.0,
+                    'technique_number' => 1,
+                    'boats' => [
+                        1 => [
+                            'racer_boat_number' => 1,
+                            'racer_course_number' => 1,
+                            'racer_start_timing' => 0.09,
+                            'racer_place_number' => 1,
+                            'racer_number' => 4080,
+                            'racer_name' => '山崎 哲司',
+                        ],
+                        2 => [
+                            'racer_boat_number' => 2,
+                            'racer_course_number' => 2,
+                            'racer_start_timing' => 0.21,
+                            'racer_place_number' => 2,
+                            'racer_number' => 4740,
+                            'racer_name' => '齋藤 達希',
+                        ],
+                        3 => [
+                            'racer_boat_number' => 3,
+                            'racer_course_number' => 3,
+                            'racer_start_timing' => 0.23,
+                            'racer_place_number' => 3,
+                            'racer_number' => 5196,
+                            'racer_name' => '鰐部 太空海',
+                        ],
+                        4 => [
+                            'racer_boat_number' => 4,
+                            'racer_course_number' => 5,
+                            'racer_start_timing' => 0.38,
+                            'racer_place_number' => 6,
+                            'racer_number' => 5120,
+                            'racer_name' => '山本 稔太朗',
+                        ],
+                        5 => [
+                            'racer_boat_number' => 5,
+                            'racer_course_number' => 4,
+                            'racer_start_timing' => 0.27,
+                            'racer_place_number' => 4,
+                            'racer_number' => 3946,
+                            'racer_name' => '赤岩 善生',
+                        ],
+                        6 => [
+                            'racer_boat_number' => 6,
+                            'racer_course_number' => 6,
+                            'racer_start_timing' => 0.32,
+                            'racer_place_number' => 5,
+                            'racer_number' => 4118,
+                            'racer_name' => '宇佐見 淳',
+                        ],
+                    ],
+                    'payouts' => [
+                        'trifecta' => [
+                            [
+                                'combination' => '1-2-3',
+                                'amount' => 4180,
+                            ],
+                        ],
+                        'trio' => [
+                            [
+                                'combination' => '1=2=3',
+                                'amount' => 1010,
+                            ],
+                        ],
+                        'exacta' => [
+                            [
+                                'combination' => '1-2',
+                                'amount' => 1650,
+                            ],
+                        ],
+                        'quinella' => [
+                            [
+                                'combination' => '1=2',
+                                'amount' => 740,
+                            ],
+                        ],
+                        'quinella_place' => [
+                            [
+                                'combination' => '1=2',
+                                'amount' => 260,
+                            ],
+                            [
+                                'combination' => '1=3',
+                                'amount' => 140,
+                            ],
+                            [
+                                'combination' => '2=3',
+                                'amount' => 480,
+                            ],
+                        ],
+                        'win' => [
+                            [
+                                'combination' => '1',
+                                'amount' => 100,
+                            ],
+                        ],
+                        'place' => [
+                            [
+                                'combination' => '1',
+                                'amount' => 150,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
         ];
     }
 }
